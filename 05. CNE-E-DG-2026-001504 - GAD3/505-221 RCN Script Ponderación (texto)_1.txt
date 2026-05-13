@@ -1,0 +1,382 @@
+import os
+import sys
+import re
+import unicodedata
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+import pyreadstat
+
+
+targets_sexo_edad = {
+    (1, 1): 0.08, (2, 1): 0.08,
+    (1, 2): 0.11, (2, 2): 0.11,
+    (1, 3): 0.09, (2, 3): 0.10,
+    (1, 4): 0.07, (2, 4): 0.08,
+    (1, 5): 0.12, (2, 5): 0.15,
+}
+targets_sexo_edad = {k: v / sum(targets_sexo_edad.values()) for k, v in targets_sexo_edad.items()}
+
+targets_depto_raw = {
+    "AMAZONAS": 0.001, "ANTIOQUIA": 0.135, "ARAUCA": 0.006, "ATLANTICO": 0.053,
+    "BOGOTA": 0.155, "BOLIVAR": 0.045, "BOYACA": 0.026, "CALDAS": 0.021,
+    "CAQUETA": 0.008, "CASANARE": 0.008, "CAUCA": 0.027, "CESAR": 0.023,
+    "CHOCO": 0.009, "CORDOBA": 0.035, "CUNDINAMARCA": 0.056, "GUAINIA": 0.001,
+    "GUAVIARE": 0.002, "HUILA": 0.024, "LA GUAJIRA": 0.018, "MAGDALENA": 0.027,
+    "META": 0.021, "NARIÑO": 0.031, "NORTE DE SANTANDER": 0.035, "PUTUMAYO": 0.007,
+    "QUINDIO": 0.013, "RISARALDA": 0.022, "SANTANDER": 0.047, "SUCRE": 0.019,
+    "TOLIMA": 0.029, "VALLE": 0.095, "VAUPES": 0.001, "VICHADA": 0.001,
+}
+
+targets_estrato = {1: 0.388, 2: 0.339, 3: 0.192, 4: 0.050, 5: 0.019, 6: 0.010, 7: 0.002}
+targets_estrato = {k: v / sum(targets_estrato.values()) for k, v in targets_estrato.items()}
+
+targets_voto_fijos = {1: 0.5044, 2: 0.4731, 3: 0.0221}
+
+gedad_labels = {1: "18-24", 2: "25-34", 3: "35-44", 4: "45-54", 5: "55 o más"}
+
+
+def normalize_text(x):
+    if pd.isna(x):
+        return np.nan
+    s = str(x).strip().upper()
+    s = "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+    s = re.sub(r"\s+", " ", s)
+    if s in ["BOGOTA D C", "BOGOTA D.C", "BOGOTA D.C.", "BOGOTA DC", "DISTRITO CAPITAL", "SANTAFE DE BOGOTA"]:
+        s = "BOGOTA"
+    return s
+
+
+def make_age_group(age):
+    if pd.isna(age):
+        return np.nan
+    try:
+        a = float(age)
+    except:
+        return np.nan
+    if 18 <= a <= 24:
+        return 1
+    if 25 <= a <= 34:
+        return 2
+    if 35 <= a <= 44:
+        return 3
+    if 45 <= a <= 54:
+        return 4
+    if a >= 55:
+        return 5
+    return np.nan
+
+
+def detect_date_column(df):
+    candidates = []
+    for c in df.columns:
+        cl = str(c).strip().lower()
+        if cl in ["fecha", "date", "datetime", "timestamp", "starttime", "start_time", "endtime", "end_time"]:
+            candidates.append(c)
+    if not candidates:
+        kw = ["fecha", "date", "time", "hora", "timestamp"]
+        for c in df.columns:
+            cl = str(c).strip().lower()
+            if any(k in cl for k in kw):
+                candidates.append(c)
+    best = None
+    best_valid = -1
+    for c in candidates:
+        parsed = pd.to_datetime(df[c], errors="coerce")
+        n_valid = int(parsed.notna().sum())
+        if n_valid > best_valid:
+            best_valid = n_valid
+            best = c
+    if best is not None and best_valid >= 10:
+        return best
+    return None
+
+
+def compute_targets_voto(voto_series):
+    s = voto_series.dropna()
+    obs = s.value_counts(normalize=True).to_dict()
+    tv = dict(targets_voto_fijos)
+    for cat in [4, 5, 6]:
+        tv[cat] = float(obs.get(cat, 0.0))
+    total = sum(tv.values())
+    return {k: v / total for k, v in tv.items()} if total > 0 else {1: 1.0}
+
+
+def targets_restrict_and_renorm(keys, targets):
+    ser = pd.Series(keys, dtype="object")
+    present = set(ser.dropna().tolist())
+    t = {k: float(v) for k, v in targets.items() if k in present and float(v) > 0}
+    s = sum(t.values())
+    if s <= 0:
+        return None
+    return {k: v / s for k, v in t.items()}
+
+
+def rake_weights(margins, base_weights=None, max_iter=250, tol=1e-8):
+    n = len(margins[0]["key"])
+    w = np.ones(n, dtype=float) if base_weights is None else np.array(base_weights, dtype=float).copy()
+    w[~np.isfinite(w)] = 1.0
+    w[w <= 0] = 1.0
+    for _ in range(max_iter):
+        w_prev = w.copy()
+        for m in margins:
+            key_s = pd.Series(m["key"], dtype="object")
+            targets = m["targets"]
+            if targets is None or len(targets) == 0:
+                continue
+            valid = key_s.notna().to_numpy()
+            total_w = w[valid].sum()
+            if total_w <= 0:
+                continue
+            for cat, tgt_prop in targets.items():
+                mask = (key_s == cat).to_numpy()
+                cur = w[mask].sum()
+                if cur <= 0:
+                    continue
+                desired = tgt_prop * total_w
+                w[mask] *= (desired / cur)
+        rel = np.abs(w - w_prev) / np.maximum(1e-12, np.abs(w_prev))
+        delta = float(np.nanmax(rel))
+        if delta < tol:
+            break
+    return w
+
+
+def extend_meta_for_new_vars(meta, df_original_cols, new_vars_spec):
+    kwargs = {}
+    if hasattr(meta, "column_labels") and meta.column_labels is not None:
+        base_labels = list(meta.column_labels)
+        if len(base_labels) != len(df_original_cols):
+            base_labels = [""] * len(df_original_cols)
+        for spec in new_vars_spec:
+            base_labels.append(spec.get("label", ""))
+        kwargs["column_labels"] = base_labels
+    if hasattr(meta, "variable_value_labels") and meta.variable_value_labels is not None:
+        vvl = dict(meta.variable_value_labels)
+        for spec in new_vars_spec:
+            vvl[spec["name"]] = spec.get("value_labels", {}) or {}
+        kwargs["variable_value_labels"] = vvl
+    if hasattr(meta, "variable_measure") and meta.variable_measure is not None:
+        vm = dict(meta.variable_measure)
+        for spec in new_vars_spec:
+            vm[spec["name"]] = spec.get("measure", "scale")
+        kwargs["variable_measure"] = vm
+    if hasattr(meta, "variable_format") and meta.variable_format is not None:
+        vf = dict(meta.variable_format)
+        for spec in new_vars_spec:
+            vf[spec["name"]] = spec.get("fmt", "F8.2")
+        kwargs["variable_format"] = vf
+    if hasattr(meta, "variable_display_width") and meta.variable_display_width is not None:
+        vw = dict(meta.variable_display_width)
+        for spec in new_vars_spec:
+            vw[spec["name"]] = int(spec.get("width", 10))
+        kwargs["variable_display_width"] = vw
+    if hasattr(meta, "missing_ranges") and meta.missing_ranges is not None:
+        mr = dict(meta.missing_ranges)
+        for spec in new_vars_spec:
+            mr[spec["name"]] = None
+        kwargs["missing_ranges"] = mr
+    return kwargs
+
+
+def build_labeled_excel_df(df_out, meta, extra_value_labels=None, extra_column_labels=None):
+    vvl = {}
+    if hasattr(meta, "variable_value_labels") and meta.variable_value_labels is not None:
+        vvl.update(meta.variable_value_labels)
+    if extra_value_labels:
+        vvl.update(extra_value_labels)
+    col_labels = {}
+    if hasattr(meta, "column_labels") and meta.column_labels is not None:
+        base_names = list(getattr(meta, "column_names", df_out.columns))
+        base_labels = list(meta.column_labels)
+        for i, name in enumerate(base_names[:len(base_labels)]):
+            lab = base_labels[i]
+            if lab is not None and str(lab).strip() != "":
+                col_labels[name] = str(lab)
+    if extra_column_labels:
+        col_labels.update(extra_column_labels)
+    df_lab = df_out.copy()
+    for col in df_lab.columns:
+        if col in vvl and isinstance(vvl[col], dict) and len(vvl[col]) > 0:
+            mapping = vvl[col]
+            ser = df_lab[col]
+            mapped = ser.map(mapping)
+            df_lab[col] = mapped.where(mapped.notna(), ser).astype("object")
+    new_cols, seen = [], set()
+    for col in df_lab.columns:
+        base = str(col_labels.get(col, col))
+        candidate = base
+        if candidate in seen:
+            candidate = f"{base} [{col}]"
+        i = 2
+        while candidate in seen:
+            candidate = f"{base} [{col}] ({i})"
+            i += 1
+        seen.add(candidate)
+        new_cols.append(candidate)
+    df_lab.columns = new_cols
+    return df_lab
+
+
+def main():
+    if len(sys.argv) < 2:
+        raise SystemExit('Uso: python script.py "ruta\\archivo.sav"')
+    sav_path = sys.argv[1]
+    if not os.path.exists(sav_path):
+        raise FileNotFoundError(sav_path)
+
+    df, meta = pyreadstat.read_sav(sav_path, apply_value_formats=False)
+
+    required_cols = ["Q02", "Q03", "Q16", "Q13", "zona"]
+    missing_cols = [c for c in required_cols if c not in df.columns]
+    if missing_cols:
+        raise ValueError(f"Faltan columnas en el .sav: {missing_cols}")
+
+    sexo = df["Q02"]
+    Gedad = df["Q03"].apply(make_age_group)
+    estrato = df["Q16"]
+    voto = df["Q13"]
+    zona_norm = df["zona"].apply(normalize_text)
+
+    targets_depto = {normalize_text(k): v for k, v in targets_depto_raw.items()}
+    targets_depto = {k: v / sum(targets_depto.values()) for k, v in targets_depto.items()}
+
+    sexo_edad_key_total = list(zip(sexo.tolist(), Gedad.tolist()))
+    targets_voto_total = compute_targets_voto(voto)
+
+    t_se_total = targets_restrict_and_renorm(sexo_edad_key_total, targets_sexo_edad)
+    t_dep_total = targets_restrict_and_renorm(zona_norm.tolist(), targets_depto)
+    t_est_total = targets_restrict_and_renorm(estrato.tolist(), targets_estrato)
+
+    margins_total_sin_voto = [
+        {"key": sexo_edad_key_total, "targets": t_se_total},
+        {"key": zona_norm.tolist(), "targets": t_dep_total},
+        {"key": estrato.tolist(), "targets": t_est_total},
+    ]
+    Ponderacion_total_sin_voto = rake_weights(margins_total_sin_voto)
+    Ponderacion_total_sin_voto = Ponderacion_total_sin_voto / np.mean(Ponderacion_total_sin_voto)
+
+    t_vot_total = targets_restrict_and_renorm(voto.tolist(), targets_voto_total)
+    margins_total = [
+        {"key": sexo_edad_key_total, "targets": t_se_total},
+        {"key": zona_norm.tolist(), "targets": t_dep_total},
+        {"key": estrato.tolist(), "targets": t_est_total},
+        {"key": voto.tolist(), "targets": t_vot_total},
+    ]
+    Ponderacion_total = rake_weights(margins_total)
+    Ponderacion_total = Ponderacion_total / np.mean(Ponderacion_total)
+
+    UNIV_TOTAL = float(np.nansum(Ponderacion_total))
+
+    Ponderacion_dia = Ponderacion_total.copy()
+    Fecha_dia = pd.Series([pd.NaT] * len(df))
+
+    date_col = detect_date_column(df)
+    if date_col is not None:
+        fecha_dt = pd.to_datetime(df[date_col], errors="coerce")
+        Fecha_dia = fecha_dt.dt.floor("D")
+
+        Ponderacion_dia = np.full(len(df), np.nan, dtype=float)
+        dias = np.sort(pd.Series(Fecha_dia).dropna().unique())
+        MIN_N_DIA = 25
+
+        for d in dias:
+            idx = np.where(Fecha_dia == d)[0]
+            n_d = len(idx)
+            if n_d == 0:
+                continue
+            if n_d < MIN_N_DIA:
+                Ponderacion_dia[idx] = Ponderacion_total[idx]
+                continue
+
+            sexo_d = sexo.iloc[idx]
+            gedad_d = Gedad.iloc[idx]
+            zona_d = zona_norm.iloc[idx]
+            estrato_d = estrato.iloc[idx]
+            voto_d = voto.iloc[idx]
+
+            sexo_edad_key_d = list(zip(sexo_d.tolist(), gedad_d.tolist()))
+
+            t_se_d = targets_restrict_and_renorm(sexo_edad_key_d, targets_sexo_edad)
+            t_dep_d = targets_restrict_and_renorm(zona_d.tolist(), targets_depto)
+            t_est_d = targets_restrict_and_renorm(estrato_d.tolist(), targets_estrato)
+            t_vot_d = targets_restrict_and_renorm(voto_d.tolist(), targets_voto_total)
+
+            if any(t is None for t in [t_se_d, t_dep_d, t_est_d, t_vot_d]):
+                Ponderacion_dia[idx] = Ponderacion_total[idx]
+                continue
+
+            margins_d = [
+                {"key": sexo_edad_key_d, "targets": t_se_d},
+                {"key": zona_d.tolist(), "targets": t_dep_d},
+                {"key": estrato_d.tolist(), "targets": t_est_d},
+                {"key": voto_d.tolist(), "targets": t_vot_d},
+            ]
+
+            w_d = rake_weights(margins_d, base_weights=np.ones(n_d, dtype=float))
+            s = float(np.nansum(w_d))
+            if s > 0:
+                w_d = w_d * (UNIV_TOTAL / s)
+            else:
+                w_d = Ponderacion_total[idx].copy()
+
+            Ponderacion_dia[idx] = w_d
+
+        miss_idx = np.where(pd.isna(Fecha_dia))[0]
+        if len(miss_idx) > 0:
+            Ponderacion_dia[miss_idx] = Ponderacion_total[miss_idx]
+        bad = ~np.isfinite(Ponderacion_dia)
+        if bad.any():
+            Ponderacion_dia[bad] = Ponderacion_total[bad]
+
+    df_out = df.copy()
+    df_out["Gedad"] = Gedad
+    df_out["zona_norm"] = zona_norm
+    df_out["Fecha_dia"] = Fecha_dia
+    df_out["Ponderación_total"] = Ponderacion_total
+    df_out["Ponderación_total_sin_voto"] = Ponderacion_total_sin_voto
+    df_out["Ponderación_dia"] = Ponderacion_dia
+
+    new_vars_spec = [
+        {"name": "Gedad", "label": "Grupo de edad", "value_labels": gedad_labels, "measure": "ordinal", "fmt": "F2.0", "width": 8},
+        {"name": "zona_norm", "label": "Departamento (zona) normalizado", "value_labels": {}, "measure": "nominal", "fmt": "A20", "width": 20},
+        {"name": "Fecha_dia", "label": "Fecha (día)", "value_labels": {}, "measure": "scale", "fmt": "ADATE10", "width": 12},
+        {"name": "Ponderación_total", "label": "Ponderación total", "value_labels": {}, "measure": "scale", "fmt": "F8.3", "width": 14},
+        {"name": "Ponderación_total_sin_voto", "label": "Ponderación total (sin voto)", "value_labels": {}, "measure": "scale", "fmt": "F8.3", "width": 18},
+        {"name": "Ponderación_dia", "label": "Ponderación por día (fixed)", "value_labels": {}, "measure": "scale", "fmt": "F8.3", "width": 16},
+    ]
+    kwargs_sav = extend_meta_for_new_vars(meta, df.columns.tolist(), new_vars_spec)
+
+    meses = {1: "ENE", 2: "FEB", 3: "MAR", 4: "ABR", 5: "MAY", 6: "JUN", 7: "JUL", 8: "AGO", 9: "SEP", 10: "OCT", 11: "NOV", 12: "DIC"}
+    hoy = datetime.today()
+    fecha_str = f"{hoy.day:02d}{meses[hoy.month]}"
+
+    out_sav_name = f"505-221 RCN Enero {fecha_str}.sav"
+    out_xlsx_name = f"505-221 RCN Enero {fecha_str}.xlsx"
+
+    out_dir = os.path.dirname(os.path.abspath(sav_path)) or os.getcwd()
+    out_sav = os.path.join(out_dir, out_sav_name)
+    out_xlsx = os.path.join(out_dir, out_xlsx_name)
+
+    pyreadstat.write_sav(df_out, out_sav, file_label=getattr(meta, "file_label", None), **kwargs_sav)
+
+    extra_value_labels = {"Gedad": gedad_labels}
+    extra_column_labels = {
+        "Gedad": "Grupo de edad",
+        "zona_norm": "Departamento (zona) normalizado",
+        "Fecha_dia": "Fecha (día)",
+        "Ponderación_total": "Ponderación total",
+        "Ponderación_total_sin_voto": "Ponderación total (sin voto)",
+        "Ponderación_dia": "Ponderación por día (fixed)",
+    }
+
+    df_excel = build_labeled_excel_df(df_out, meta, extra_value_labels=extra_value_labels, extra_column_labels=extra_column_labels)
+
+    with pd.ExcelWriter(out_xlsx, engine="openpyxl") as writer:
+        df_excel.to_excel(writer, index=False, sheet_name="Datos_etiquetados")
+        df_out.to_excel(writer, index=False, sheet_name="Datos_codigos")
+
+
+if __name__ == "__main__":
+    main()

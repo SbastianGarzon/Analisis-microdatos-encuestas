@@ -1,0 +1,9 @@
+N03 &T
+N11
+N03
+N01 Si      ;C=CA00'1'
+N01 No      ;C=CA00'2'
+N01 Ns/Nr   ;C=CA00'9'
+N03;COLTXT R+1=----
+N05
+

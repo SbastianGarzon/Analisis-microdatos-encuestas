@@ -1,0 +1,24 @@
+{
+    "id": "E73773C6",
+    "path": "//10.0.0.2/Empresarial/Sistema de Calidad/4.Gerencia Investigacion de Mercados/5.Dirección de Analítica/1.Analisis Estadistico/1.Registros/2.Comunes/ACPM/2022/7. Librerias/INVAMER.MUESTREO/R/TipoSubMuestreo.R",
+    "project_path": "R/TipoSubMuestreo.R",
+    "type": "r_source",
+    "hash": "1706424958",
+    "contents": "",
+    "dirty": false,
+    "created": 1666099234428.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1665786712,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1665786712,
+    "read_only": false,
+    "read_only_alternatives": []
+}

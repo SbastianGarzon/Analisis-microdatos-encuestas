@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+*.pyo
+*.ipynb_checkpoints/
+
+# Archivos temporales
+*.crdownload
+*.tmp
+~$*
+
+# Binarios/datos demasiado pesados para GitHub
+*.sav
+*.dbf
+*.shp
+*.shx
+*.prj
+*.cpg
+
+# Salidas locales opcionales
+.DS_Store
+Thumbs.db

@@ -1,0 +1,1990 @@
+---
+title: "Hablemos de Democracia - Encuesta"
+subtitle: "**[DOCUMENTO DE APOYO]**"
+author: "Camila Bedoya"
+date: "`r Sys.Date()`"
+output: beamer_presentation
+header-includes:
+  - \renewcommand{\figurename}{Figura}
+  - \renewcommand{\tablename}{Tabla}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(haven)
+library(openxlsx)
+library(knitr)
+library(ggplot2)
+library(scales)
+library(dplyr)
+library(tidyr)
+library(tidytext)
+library(stringr)
+library(wordcloud)
+library(stopwords)
+library(knitr)
+library(ggalluvial)
+library(sysfonts)
+library(showtext)
+library(forcats)
+library(scales)
+
+data <- read.xlsx("~/Library/CloudStorage/OneDrive-Personal/Proyectos Adicionales/Eafit_hablemosdemocracia/03. Ejecución/00_encuesta/01_Raw/CLIENTE/DATA CON FACTOR ACTUALIZADO/DATA - 033400250000 ESTUDIO SOBRE DEMOCRACIA 2025 (Con factor).xlsx")
+
+
+# =========================
+# PALETA
+# =========================
+cvp_cols <- c(
+  azul_oscuro = "#2c285b",
+  azul_claro  = "#00a9e0",
+  amarillo    = "#ffb83b",
+  gris_claro  = "#c5c5c5",
+  azul_muy_cl = "#bdd7e7",
+  gris_oscuro = "#5b5b5a",
+  naranja     = "#ea8642"
+)
+
+cvp_primary <- unname(cvp_cols[c("azul_oscuro","azul_claro","amarillo")])
+cvp_extra   <- unname(cvp_cols[c("gris_claro", "azul_muy_cl","gris_oscuro","naranja")])
+
+cvp_palette <- function(n) {
+  pal <- c(cvp_primary, cvp_extra)
+  if (n <= length(pal)) pal[seq_len(n)] else rep(pal, length.out = n)
+}
+
+scale_colour_discrete <- function(...) ggplot2::scale_colour_manual(values = cvp_palette(50), ...)
+scale_color_discrete  <- scale_colour_discrete
+scale_fill_discrete   <- function(...) ggplot2::scale_fill_manual(values = cvp_palette(50), ...)
+
+# =========================
+# FUENTE Inter (para plots)
+# =========================
+showtext_auto()
+
+theme_set(
+  theme_minimal(base_family = "Inter") +
+    theme(text = element_text(family = "Inter"))
+)
+
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  dev = "pdf",        # gráficos vectoriales (máxima nitidez en beamer)
+  fig.width = 11,     # ancho grande para diapositivas 16:9
+  fig.height = 6.5    # altura proporcional
+)
+```
+
+# Satisfacción general con la democracia 
+
+```{r P7_control, out.width="100%", echo=FALSE, warning=FALSE}
+tabla_p7_control <- data %>%
+  filter(!is.na(P7), !is.na(ROTA_FRASES)) %>%
+  mutate(
+    P7 = factor(P7,
+                levels = c(1, 2, 98),
+                labels = c("Satisfecho", "Insatisfecho", "No responde"))
+  ) %>%
+  group_by(ROTA_FRASES, P7) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),  # ← ponderación
+    .groups = "drop_last"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond),                        # ← proporción ponderada
+    pct_label = scales::percent(pct, accuracy = 0.1)
+  ) %>%
+  ungroup() %>%
+  filter(ROTA_FRASES == 3) %>%
+  mutate(
+    ROTA_FRASES = case_when(
+      ROTA_FRASES == 1 ~ "Tratamiento 1",
+      ROTA_FRASES == 2 ~ "Tratamiento 2",
+      ROTA_FRASES == 3 ~ "Control",
+      TRUE ~ as.character(ROTA_FRASES)
+    )
+  ) |> 
+  mutate(
+    P7 = factor(P7, levels = c("Satisfecho", "Insatisfecho", "No responde"))
+  )
+
+
+ggplot(tabla_p7_control, aes(x = P7, y = pct)) +
+  geom_col(fill = "#ffb83b", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4,
+    size = 6
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, 0.65),                 
+    expand = expansion(mult = c(0, 0.02)) # <- línea base pegada
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    text = element_text(color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    axis.text = element_text(size = 20),
+    legend.position = "none"
+  )
+
+```
+
+# Percepción de que la democracia se debilita
+
+```{r P14, out.width="100%", echo=FALSE, warning=FALSE}
+tabla_noticias <- data %>%
+  filter(!is.na(P14)) %>%
+  mutate(
+    noti = factor(
+      P14,
+      levels = c(1, 2, 3, 98),
+      labels = c(
+        "Se está\nfortaleciendo",
+        "Permanece\nigual",
+        "Se está\ndebilitando",
+        "NR"
+      )
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond)
+  )
+
+ggplot(tabla_noticias, aes(x = noti, y = pct)) +
+  geom_col(fill = "#00a9e0", width = 0.7) +   # azul claro institucional
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4,
+    size = 6,
+    color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(tabla_noticias$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    axis.title = element_text(color = "black"),
+    plot.title = element_text(size = 22, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+```
+
+# ¿Qué influencia la satisfacción con la democracia?
+
+```{r P8, out.width="100%", echo=FALSE}
+influencia <- data %>%
+  filter(!is.na(P8)) %>%
+  mutate(
+    noti = factor(
+      P8,
+      levels = c(1, 2, 3, 4, 98),
+      labels = c(
+        "Nada\ninfluenciado(a)",
+        "Algo\ninfluenciado(a)",
+        "Influenciado(a)",
+        "Muy\ninfluenciado(a)",
+        "NR"
+      )
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond)
+  )
+
+ggplot(influencia, aes(x = noti, y = pct)) +
+  geom_col(fill = "#00a9e0", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4,
+    size = 6,
+    color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(influencia$pct, na.rm = TRUE) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+
+```
+
+# ¿Qué influencia la satisfacción con la democracia?
+
+```{r P10, out.width="100%", echo=FALSE}
+items_p10 <- paste0("P10_", 1:11)
+
+labels_p10 <- c(
+  "Corrupción",
+  "Protestas/marchas",
+  "Enfrentamientos políticos",
+  "Desigualdad",
+  "Libertades restringidas",
+  "Líderes hablan de lo importante",
+  "Presencia del Estado",
+  "Asistencia del Estado",
+  "Líderes sin preparación",
+  "Órganos de control",
+  "Pobreza"
+)
+
+p10_long <- data %>%
+  select(all_of(items_p10), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p10),
+    names_to = "item",
+    values_to = "respuesta"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p10, labels = labels_p10),
+    respuesta = factor(
+      respuesta,
+      levels = c(1, 2, 3, 4),
+      labels = c("Nada de\ninfluencia", "Poca\ninfluencia", "Algo de\ninfluencia", "Mucha\ninfluencia")
+    )
+  ) %>%
+  filter(!is.na(respuesta))
+
+p10_pct <- p10_long %>%
+  group_by(item, respuesta) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%   # <- 100% dentro de cada ítem
+  ungroup()
+
+orden_items <- p10_pct %>%
+  filter(respuesta == "Mucha\ninfluencia") %>%
+  arrange(desc(pct)) %>%
+  pull(item)
+
+orden_items_inv <- rev(orden_items)
+
+p10_pct_ord <- p10_pct %>%
+  mutate(item = factor(item, levels = orden_items_inv))
+
+ggplot(p10_pct_ord, aes(y = item, x = pct, fill = respuesta)) +
+  geom_col(width = 0.75, color = "white", linewidth = 0.3) +
+  geom_text(
+    aes(label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+    color = ifelse(
+      respuesta %in% c("Mucha\ninfluencia", "Algo de\ninfluencia"),
+      "white", "black")),
+    position = position_stack(vjust = 0.5),
+    size = 5,
+  ) +
+  scale_color_identity() +
+  scale_fill_manual(values = rev(cvp_palette(4)),name = "Nivel de\ninfluencia", 
+                    guide = guide_legend(reverse = TRUE)) +  # ← usa tu paleta CVP automática
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    text = element_text(color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
+  )
+
+```
+
+# ¿Qué emociones despiertan los líderes políticos?
+
+```{r P30, out.width="100%", echo=FALSE, warning=FALSE}
+emociones <- data %>%
+  filter(!is.na(P30)) %>%
+  mutate(
+    noti = factor(
+      P30,
+      levels = c(1, 2, 3, 4, 5, 98),
+      labels = c(
+        "Indignación o rabia",
+        "Decepción o tristeza",
+        "Indiferencia",
+        "Interés,\ndeseos de saber más",
+        "Esperanza o ilusión",
+        "NR"
+      )
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond),
+    # Mantener orientación horizontal y ordenar por porcentaje (como tu lógica original)
+    noti = fct_reorder(noti, pct, .desc = FALSE)
+  )
+
+ggplot(emociones, aes(y = noti, x = pct)) +
+  geom_col(fill = "#2c285b", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    hjust = -0.15,
+    size = 6,
+    color = "black"
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(emociones$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.y = element_line(color = "black", linewidth = 0.3),
+    axis.line.x = element_blank(),
+    legend.position = "none"
+  )
+
+```
+
+# ¿Qué importa para el funcionamiento de la democracia?
+
+```{r P12, out.width="100%", echo=FALSE, warning=FALSE}
+# 1) Items + labels
+items_p12 <- paste0("P12_", 1:6)
+
+labels_p12 <- c(
+  "Participación en decisiones políticas",
+  "Respeto a la dignidad humana",
+  "Discusión libre de ideas",
+  "Respeto a reglas de la Constitución",
+  "Búsqueda de igualdad socioeconómica",
+  "Comportamiento cívico y respeto de leyes"
+)
+
+# 2) Long + factores
+p12_long <- data %>%
+  select(all_of(items_p12), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p12),
+    names_to = "item",
+    values_to = "respuesta"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p12, labels = labels_p12),
+    respuesta = factor(
+      respuesta,
+      levels = c(1, 2, 3, 4),
+      labels = c("Nada\nimportante", "Poca\nimportancia", "Algo\nimportante", "Totalmente\nimportante")
+    )
+  ) %>%
+  filter(!is.na(respuesta))
+
+# 3) % ponderado (100% dentro de cada ítem)
+p12_pct <- p12_long %>%
+  group_by(item, respuesta) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%  # <- 100% dentro de cada ítem
+  ungroup()
+
+# 4) Ordenar ítems por "Totalmente importante"
+orden_items_p12 <- p12_pct %>%
+  filter(respuesta == "Totalmente\nimportante") %>%
+  arrange(desc(pct)) %>%
+  pull(item)
+
+orden_items_p12_inv <- rev(orden_items_p12)
+
+p12_pct_ord <- p12_pct %>%
+  mutate(item = factor(item, levels = orden_items_p12_inv))
+
+# 5) Plot (misma estética plantilla)
+ggplot(p12_pct_ord, aes(y = item, x = pct, fill = respuesta)) +
+  geom_col(width = 0.75, color = "white", linewidth = 0.3) +
+  geom_text(
+    aes(
+      label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+      color = ifelse(
+        respuesta %in% c("Totalmente\nimportante", "Algo\nimportante"),
+        "white", "black"
+      )
+    ),
+    position = position_stack(vjust = 0.5),
+    size = 5
+  ) +
+  scale_color_identity() +
+  scale_fill_manual(
+    values = rev(cvp_palette(4)),
+    name = "Nivel de\nimportancia",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    text = element_text(color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
+  )
+
+```
+
+# ¿Qué está en riesgo en nuestra democracia?
+
+```{r P13, out.width="100%", echo=FALSE, warning=FALSE}
+# 1) Items + labels
+items_p13 <- paste0("P13_", 1:6)
+
+labels_p13 <- c(
+  "Participación ciudadana",
+  "Respeto dignidad humana y DD.II.",
+  "Discusión libre en debate público",
+  "Cuidado y defensa de la Constitución",
+  "Igualdad socioeconómica básica",
+  "Compromiso ciudadano y respeto a la ley"
+)
+
+# 2) Long + factores
+p13_long <- data %>%
+  select(all_of(items_p13), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p13),
+    names_to = "item",
+    values_to = "respuesta"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p13, labels = labels_p13),
+    respuesta = factor(
+      respuesta,
+      levels = c(1, 2, 3, 4),
+      labels = c("Ningún\nriesgo", "Bajo\nriesgo", "Riesgo\nmoderado", "Alto\nriesgo")
+    )
+  ) %>%
+  filter(!is.na(respuesta))
+
+# 3) % ponderado (100% dentro de cada ítem)
+p13_pct <- p13_long %>%
+  group_by(item, respuesta) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%  # <- 100% dentro de cada ítem
+  ungroup()
+
+# 4) Ordenar ítems por % de "Alto riesgo"
+orden_items_p13 <- p13_pct %>%
+  filter(respuesta == "Alto\nriesgo") %>%
+  arrange(desc(pct)) %>%
+  pull(item)
+
+orden_items_p13_inv <- rev(orden_items_p13)
+
+p13_pct_ord <- p13_pct %>%
+  mutate(item = factor(item, levels = orden_items_p13_inv))
+
+# 5) Plot (misma estética plantilla)
+ggplot(p13_pct_ord, aes(y = item, x = pct, fill = respuesta)) +
+  geom_col(width = 0.75, color = "white", linewidth = 0.3) +
+  geom_text(
+    aes(
+      label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+      color = ifelse(
+        respuesta %in% c("Alto\nriesgo", "Riesgo\nmoderado"),
+        "white", "black"
+      )
+    ),
+    position = position_stack(vjust = 0.5),
+    size = 5
+  ) +
+  scale_color_identity() +
+  scale_fill_manual(
+    values = rev(cvp_palette(4)),
+    name = "Nivel de\nriesgo",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    text = element_text(color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
+  )
+```
+
+# Las mayores amenazas a nuestra democracia
+
+```{r P29, out.width="100%", echo=FALSE}
+# 1) Items + labels
+items_p32 <- paste0("P32_", 1:10)
+
+labels_p32 <- c(
+  "Información falsa o engañosa",
+  "Desconfianza hacia instituciones democráticas",
+  "Falta de interés y compromiso ciudadano",
+  "Voz limitada por desigualdad socioeconómica",
+  "Interferencia extranjera",
+  "Falta de libertad/diversidad de prensa",
+  "Falta de conocimiento democrático",
+  "Falta de transparencia electoral",
+  "Desestabilización electoral",
+  "Intereses privados en el sistema electoral"
+)
+
+# 2) Long + factores
+p32_long <- data %>%
+  select(all_of(items_p32), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p32),
+    names_to = "item",
+    values_to = "respuesta"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p32, labels = labels_p32),
+    respuesta = factor(
+      respuesta,
+      levels = c(1, 2, 3, 4),
+      labels = c(
+        "No es una\namenaza",
+        "Amenaza\nleve",
+        "Amenaza\nmoderada",
+        "Amenaza\nmuy seria"
+      )
+    )
+  ) %>%
+  filter(!is.na(respuesta))
+
+# 3) % ponderado (100% dentro de cada ítem)
+p32_pct <- p32_long %>%
+  group_by(item, respuesta) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  ungroup()
+
+# 4) Ordenar ítems por % de “Amenaza muy seria”
+orden_items_p32 <- p32_pct %>%
+  filter(respuesta == "Amenaza\nmuy seria") %>%
+  arrange(desc(pct)) %>%
+  pull(item)
+
+orden_items_p32_inv <- rev(orden_items_p32)
+
+p32_pct_ord <- p32_pct %>%
+  mutate(item = factor(item, levels = orden_items_p32_inv))
+
+# 5) Plot (misma estética plantilla)
+ggplot(p32_pct_ord, aes(y = item, x = pct, fill = respuesta)) +
+  geom_col(width = 0.75, color = "white", linewidth = 0.3) +
+  geom_text(
+    aes(
+      label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+      color = ifelse(
+        respuesta %in% c("Amenaza\nmuy seria", "Amenaza\nmoderada"),
+        "white", "black"
+      )
+    ),
+    position = position_stack(vjust = 0.5),
+    size = 5
+  ) +
+  scale_color_identity() +
+  scale_fill_manual(
+    values = rev(cvp_palette(4)),
+    name = "Nivel de\namenaza",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    text = element_text(size = 12, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
+  )
+```
+
+# ¿Quién cuida nuestra democracia?
+
+```{r P33, out.width="100%", echo=FALSE}
+# 1) Items + labels
+items_p33 <- paste0("P33_", 1:9)
+
+labels_p33 <- c(
+  "Medios de comunicación",
+  "Cortes de justicia",
+  "Gobierno nacional",
+  "Gobierno local",
+  "Congreso",
+  "Partidos políticos",
+  "Organizaciones de la sociedad civil",
+  "Ciudadanía",
+  "Fuerzas militares"
+)
+
+# 2) Long + factores
+p33_long <- data %>%
+  select(all_of(items_p33), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p33),
+    names_to = "item",
+    values_to = "respuesta"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p33, labels = labels_p33),
+    respuesta = factor(
+      respuesta,
+      levels = c(1, 2, 3, 4),
+      labels = c(
+        "Nada\nresponsable",
+        "Algo\nresponsable",
+        "Muy\nresponsable",
+        "Totalmente\nresponsable"
+      )
+    )
+  ) %>%
+  filter(!is.na(respuesta))
+
+# 3) % ponderado (100% dentro de cada ítem)
+p33_pct <- p33_long %>%
+  group_by(item, respuesta) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  ungroup()
+
+# 4) Ordenar ítems por % de "Totalmente responsable"
+orden_items_p33 <- p33_pct %>%
+  filter(respuesta == "Totalmente\nresponsable") %>%
+  arrange(desc(pct)) %>%
+  pull(item)
+
+orden_items_p33_inv <- rev(orden_items_p33)
+
+p33_pct_ord <- p33_pct %>%
+  mutate(item = factor(item, levels = orden_items_p33_inv))
+
+# 5) Plot (misma estética plantilla)
+ggplot(p33_pct_ord, aes(y = item, x = pct, fill = respuesta)) +
+  geom_col(width = 0.75, color = "white", linewidth = 0.3) +
+  geom_text(
+    aes(
+      label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+      color = ifelse(
+        respuesta %in% c("Totalmente\nresponsable", "Muy\nresponsable"),
+        "white", "black"
+      )
+    ),
+    position = position_stack(vjust = 0.5),
+    size = 5
+  ) +
+  scale_color_identity() +
+  scale_fill_manual(
+    values = rev(cvp_palette(4)),
+    name = "Nivel de responsabilidad",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    text = element_text(color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
+  )
+```
+
+# Quien (no) cuida nuestra democracia: medios
+
+```{r P27_total, out.width="100%", echo=FALSE, warning=FALSE}
+# 1) Items + labels
+items_p27 <- paste0("P27_", 1:4)
+
+labels_p27 <- c(
+  "Hacen eco de noticias\nfalsas y mentiras",
+  "Dan acceso a diferentes\ntipos de opinión",
+  "Están concentrados\nen pocas manos/grupos",
+  "Favorecen opciones\npolíticas/económicas"
+)
+
+# 2) Long + factores
+p27_long <- data %>%
+  select(all_of(items_p27), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p27),
+    names_to = "item",
+    values_to = "respuesta"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p27, labels = labels_p27),
+    respuesta = factor(
+      respuesta,
+      levels = c(1, 2, 3, 4),
+      labels = c("Muy de\nacuerdo", "De\nacuerdo", "En\ndesacuerdo", "Muy en\ndesacuerdo")
+    )
+  ) %>%
+  filter(!is.na(respuesta))
+
+# 3) % ponderado (100% dentro de cada ítem)
+p27_pct <- p27_long %>%
+  group_by(item, respuesta) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  ungroup()
+
+# 4) Orden por % de “Muy de acuerdo + De acuerdo”
+orden_items_p27 <- p27_pct %>%
+  # Filtramos solo la respuesta que te interesa para ordenar
+  filter(respuesta == "Muy de\nacuerdo") %>% 
+  # Ordenamos de Mayor a Menor (descendente)
+  arrange(desc(pct)) %>% 
+  pull(item)
+
+p27_pct_ord <- p27_pct %>%
+  mutate(item = factor(item, levels = orden_items_p27))
+
+p27_pct_ord <- p27_pct_ord %>%
+  mutate(
+    respuesta = factor(
+      respuesta,
+      levels = c(
+        "Muy en\ndesacuerdo",
+        "En\ndesacuerdo",
+        "De\nacuerdo",
+        "Muy de\nacuerdo"
+      )
+    )
+  )
+
+p27_pct_ord <- p27_pct_ord %>%
+  group_by(item) %>%
+  arrange(item, respuesta) %>%
+  mutate(
+    y_text = cumsum(pct) - pct / 2
+  ) %>%
+  ungroup()
+
+# 5) Plot (MISMA ORIENTACIÓN: barras verticales)
+
+ggplot(p27_pct_ord, aes(x = item, y = pct, fill = respuesta)) +
+  
+  # 1. BARRAS: reverse = TRUE para invertir el orden de apilado
+  geom_col(
+    width = 0.75, 
+    color = "white", 
+    linewidth = 0.3,
+    position = position_stack(reverse = FALSE)
+  ) +
+  
+  # 2. TEXTO: Centrado y con color condicional ajustado
+  geom_text(
+    aes(
+      label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+      
+      # --- CAMBIO AQUÍ: Solo "Muy de acuerdo" en blanco, el resto negro ---
+      color = ifelse(respuesta == "Muy de\nacuerdo" |
+                     respuesta == "de\nacuerdo"   , "white", "black")
+    ),
+    
+    # vjust = 0.5 centra verticalmente. reverse = TRUE alinea con las barras invertidas.
+    position = position_stack(vjust = 0.5, reverse = FALSE), 
+    size = 5
+  ) +
+  
+  scale_color_identity() + # Para que entienda "white" y "black" literal
+  
+  scale_fill_manual(
+  name = "Nivel",
+  values = c(
+    "Muy de\nacuerdo"     = cvp_palette(4)[1],
+    "De\nacuerdo"         = cvp_palette(4)[2],
+    "En\ndesacuerdo"      = cvp_palette(4)[3],
+    "Muy en\ndesacuerdo"  = cvp_palette(4)[4]
+  ),
+  guide = guide_legend(reverse = TRUE)
+) +
+    
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  
+  labs(title = "", x = "", y = "") +
+  
+  theme(
+    text = element_text(color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.y = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    legend.position = "right",
+    legend.title = element_text(size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
+  )
+```
+
+# Satisfacción general con la democracia 
+
+```{r P7, out.width="100%", echo=FALSE, warning=FALSE}
+tabla_p7_rota <- data %>%
+  filter(!is.na(P7), !is.na(ROTA_FRASES)) %>%
+  mutate(
+    P7 = factor(P7,
+                levels = c(1, 2, 98),
+                labels = c("Satisfecho", "Insatisfecho", "No responde"))
+  ) %>%
+  group_by(ROTA_FRASES, P7) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),  # ← ponderación
+    .groups = "drop_last"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond),                        # ← proporción ponderada
+    pct_label = scales::percent(pct, accuracy = 0.1)
+  ) %>%
+  ungroup() %>%
+  filter(P7 == "Satisfecho") %>%
+  mutate(
+    ROTA_FRASES = case_when(
+      ROTA_FRASES == 1 ~ "Tratamiento 1",
+      ROTA_FRASES == 2 ~ "Tratamiento 2",
+      ROTA_FRASES == 3 ~ "Control",
+      TRUE ~ as.character(ROTA_FRASES)
+    )
+  )
+  
+ggplot(
+  tabla_p7_rota,
+  aes(
+    x = ROTA_FRASES,
+    y = pct,
+    fill = case_when(
+      ROTA_FRASES %in% c("Control", 3)        ~ "Control",
+      ROTA_FRASES %in% c("Tratamiento 1", 1)  ~ "Tratamiento 1",
+      ROTA_FRASES %in% c("Tratamiento 2", 2)  ~ "Tratamiento 2"
+    )
+  )
+) +
+  geom_col(width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Control"        = "#2c285b",
+      "Tratamiento 1"  = "#ffb83b",
+      "Tratamiento 2"  = "#00a9e0"
+    ),
+    guide = "none"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(tabla_p7_rota$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.6),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+
+```
+
+# ¿Es mejor la democracia representativa?
+
+```{r P23, out.width="100%", echo=FALSE, warning=FALSE}
+# 1) Items + labels
+items_p23 <- paste0("P23_", 1:5)
+
+labels_p23 <- c(
+  "Sistema democrático\ncon presidente y congreso",
+  "Participación directa\nen decisiones",
+  "Decisiones tomadas\npor expertos",
+  "Figura fuerte sin\ncontrol del congreso",
+  "Gobierno de las\nfuerzas armadas"
+)
+
+# 2) Long + factores
+p23_long <- data %>%
+  select(all_of(items_p23), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p23),
+    names_to = "item",
+    values_to = "respuesta"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p23, labels = labels_p23),
+    respuesta = factor(
+      respuesta,
+      levels = c(1, 2, 3, 4),
+      labels = c("Muy\nbuena", "Buena", "Mala", "Muy\nmala")
+    )
+  ) %>%
+  filter(!is.na(respuesta))
+
+# 3) % ponderado (100% dentro de cada ítem)
+p23_pct <- p23_long %>%
+  group_by(item, respuesta) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  ungroup()
+
+# 4) Orden por % de "Muy buena" (mayor -> menor)
+orden_items_23 <- p23_pct %>%
+  # Filtramos solo la respuesta que te interesa para ordenar
+  filter(respuesta == "Muy\nbuena") %>% 
+  # Ordenamos de Mayor a Menor (descendente)
+  arrange(desc(pct)) %>% 
+  pull(item)
+
+
+p23_pct_ord <- p23_pct %>%
+  mutate(item = factor(item, levels = orden_items_23))
+
+p23_pct_ord <- p23_pct_ord %>%
+  mutate(
+    respuesta = factor(
+      respuesta,
+      levels = c(
+        "Muy\nmala",
+        "Mala",
+        "Buena",
+        "Muy\nbuena"
+      )
+    )
+  )
+
+# 5) Plot (MISMA ORIENTACIÓN: barras verticales)
+ggplot(p23_pct_ord, aes(x = item, y = pct, fill = respuesta)) +
+  
+  # 1. BARRAS: reverse = FALSE (Tal como en tu ejemplo P27)
+  geom_col(
+    width = 0.75, 
+    color = "white", 
+    linewidth = 0.3,
+    position = position_stack(reverse = FALSE)
+  ) +
+  
+  # 2. TEXTO: Centrado, accuracy = 1 y color condicional
+  geom_text(
+    aes(
+      label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+      
+      # Condición adaptada a las etiquetas de P23 ("Muy buena" y "Buena" en blanco)
+      color = ifelse(respuesta %in% c("Muy\nbuena", "Buena"), "white", "black")
+    ),
+    
+    # vjust = 0.5 y reverse = FALSE para coincidir con las barras
+    position = position_stack(vjust = 0.5, reverse = FALSE), 
+    size = 4
+  ) +
+  
+  scale_color_identity() + 
+  
+  scale_fill_manual(
+    name = "Nivel", # O "" si prefieres sin título
+    # Asignación manual exacta a las respuestas de P23
+    values = c(
+      "Muy\nbuena" = cvp_palette(4)[1],
+      "Buena"      = cvp_palette(4)[2],
+      "Mala"       = cvp_palette(4)[3],
+      "Muy\nmala"  = cvp_palette(4)[4]
+    ),
+    guide = guide_legend(reverse = TRUE)
+  ) +
+    
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  
+  labs(title = "", x = "", y = "") +
+  
+  # 3. TEMA (Exactamente la estructura de P27)
+  theme(
+    text = element_text(color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"), # Ojo: Si los textos P23 son largos, quizás necesites angle=90 aquí
+    axis.text.y = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.y = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    legend.position = "right",
+    legend.title = element_text(color = "black"),
+    legend.text = element_text(size = 9, color = "black")
+  )
+
+```
+
+# ¿La democracia funciona mejor en otros lugrares?
+
+```{r P19, out.width="100%", echo=FALSE, warning=FALSE}
+funciona <- data %>%
+  filter(!is.na(P19)) %>%
+  mutate(
+    noti = factor(
+      P19,
+      levels = c(1, 2, 3, 4, 98),
+      labels = c("Nada de\nacuerdo", "Algo de\nacuerdo", "Muy de\nacuerdo", "Totalmente de\nacuerdo", "NR")
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond)
+  )
+
+ggplot(funciona, aes(x = noti, y = pct)) +
+  geom_col(fill = "#2c285b", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(tabla_noticias$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+```
+
+# ¿La democracia funciona mejor en sociedades más educadas?
+
+```{r P20, out.width="100%", echo=FALSE, warning=FALSE}
+tabla_noticias <- data %>%
+  filter(!is.na(P20)) %>%
+  mutate(
+    noti = factor(
+      P20,
+      levels = c(1, 2, 3, 4, 98),
+      labels = c("Nada\nde acuerdo", "Algo de\nacuerdo", "De acuerdo", "Totalmente\nde acuerdo", "NR")
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond)
+  )
+
+ggplot(tabla_noticias, aes(x = noti, y = pct)) +
+  geom_col(fill = "#2c285b", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(tabla_noticias$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+
+```
+
+# ¿Qué mejoraría la satisfacción con la democracia?
+
+```{r P9, out.width="100%", echo=FALSE, warning=FALSE}
+mejorar <- data %>%
+  filter(!is.na(P9)) %>%
+  mutate(
+    noti = factor(
+      P9,
+      levels = c(1, 2, 3, 4, 98),
+      labels = c("Nada\nprobable", "Algo probable", "Probable", "Muy\nprobable", "NR")
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond)
+  )
+
+ggplot(mejorar, aes(x = noti, y = pct)) +
+  geom_col(fill = "#ffb83b", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(mejorar$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+```
+
+# ¿Cómo se informa la satisfacción con la democracia?
+
+```{r P35, out.width="100%", echo=FALSE, warning=FALSE}
+informa <- data %>%
+  filter(!is.na(P35)) %>%
+  mutate(
+    noti = factor(
+      P35,
+      levels = c(1, 2, 3, 4, 5, 98),
+      labels = c(
+        "Los medios tradicionales\n(TV, radio, periódicos)",
+        "Las redes sociales",
+        "Amigos o familiares",
+        "Interés, deseos de saber más",
+        "El contacto directo con estos actores políticos",
+        "NR"
+      )
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond),
+    # mantener orientación horizontal y orden como tu lógica original
+    noti = fct_reorder(noti, pct, .desc = FALSE)
+  )
+
+ggplot(informa, aes(y = noti, x = pct)) +
+  geom_col(fill = "#00a9e0", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    hjust = -0.15, size = 6, color = "black"
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(informa$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.y = element_line(color = "black", linewidth = 0.3),
+    axis.line.x = element_blank(),
+    legend.position = "none"
+  )
+
+```
+
+# ¿Qué mejoraría la satisfacción con la democracia?
+
+```{r P11, out.width="100%", echo=FALSE, warning=FALSE}
+# 1) Items + labels
+items_p11 <- paste0("P11_", 1:12)
+
+labels_p11 <- c(
+  "Más contacto con representantes",
+  "Mejor preparación de representantes",
+  "Más info y transparencia",
+  "Mayor diversidad de representantes",
+  "Nueva forma de financiar campañas",
+  "Más asistencia del Estado",
+  "Mayor seguridad calles/campo",
+  "Más y mejores oportunidades edu/trabajo",
+  "Nueva constitución política",
+  "Mejor cumplimiento de leyes",
+  "Mejores acuerdos políticos",
+  "Más participación directa"
+)
+
+# 2) Long + factores
+niveles_p11 <- c("Nada de\ninfluencia", "Poca\ninfluencia", "Algo de\ninfluencia", "Mucha\ninfluencia")
+
+p11_long <- data %>%
+  select(all_of(items_p11), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p11),
+    names_to = "item",
+    values_to = "respuesta"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p11, labels = labels_p11),
+    respuesta = factor(
+      respuesta,
+      levels = c(1, 2, 3, 4),
+      labels = niveles_p11
+    )
+  ) %>%
+  filter(!is.na(respuesta))
+
+# 3) % ponderado (100% dentro de cada ítem)
+p11_pct <- p11_long %>%
+  group_by(item, respuesta) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  ungroup()
+
+# 4) Ordenar ítems por % de "Mucha influencia"
+orden_items_p11 <- p11_pct %>%
+  filter(respuesta == "Mucha\ninfluencia") %>%
+  arrange(desc(pct)) %>%
+  pull(item)
+
+orden_items_p11_inv <- rev(orden_items_p11)
+
+p11_pct_ord <- p11_pct %>%
+  mutate(item = factor(item, levels = orden_items_p11_inv))
+
+# 5) Colores fijos por categoría (no cambian)
+colores_p11 <- setNames(rev(cvp_palette(4)), niveles_p11)
+
+# 6) Plot (misma estética plantilla)
+ggplot(p11_pct_ord, aes(y = item, x = pct, fill = respuesta)) +
+  geom_col(width = 0.75, color = "white", linewidth = 0.3) +
+  geom_text(
+    aes(
+      label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+      color = ifelse(
+        respuesta %in% c("Mucha\ninfluencia", "Algo de\ninfluencia"),
+        "white", "black"
+      )
+    ),
+    position = position_stack(vjust = 0.5),
+    size = 5
+  ) +
+  scale_color_identity() +
+  scale_fill_manual(
+    values = colores_p11,
+    breaks = niveles_p11,
+    name = "Nivel de influencia",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    text = element_text(color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
+  )
+
+
+```
+
+# ¿Dónde se habla de democracia?
+
+```{r P15_total, out.width="100%", echo=FALSE, warning=FALSE}
+# 1) Items + labels
+items_p15 <- paste0("P15_", 1:5)
+
+labels_p15 <- c(
+  "Hogar / familia",
+  "Barrio / vereda",
+  "Colegio o universidad",
+  "Redes sociales",
+  "Medios tradicionales"
+)
+
+# 2) Long + factores
+niveles_p15 <- c("Nada de\nacuerdo", "Poco de\nacuerdo", "Algo de\nacuerdo", "Totalmente\nde acuerdo")
+
+p15_long <- data %>%
+  select(all_of(items_p15), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p15),
+    names_to = "item",
+    values_to = "respuesta"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p15, labels = labels_p15),
+    respuesta = factor(
+      respuesta,
+      levels = c(1, 2, 3, 4),
+      labels = niveles_p15
+    )
+  ) %>%
+  filter(!is.na(respuesta))
+
+# 3) % ponderado (100% dentro de cada ítem)
+p15_pct <- p15_long %>%
+  group_by(item, respuesta) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  ungroup()
+
+# 4) Ordenar ítems por % de "Totalmente de acuerdo"
+orden_items_p15 <- p15_pct %>%
+  filter(respuesta == "Totalmente\nde acuerdo") %>%
+  arrange(desc(pct)) %>%
+  pull(item)
+
+orden_items_p15_inv <- rev(orden_items_p15)
+
+p15_pct_ord <- p15_pct %>%
+  mutate(item = factor(item, levels = orden_items_p15_inv))
+
+# 5) Colores fijos por categoría (no cambian)
+colores_p15 <- setNames(rev(cvp_palette(4)), niveles_p15)
+
+# 6) Plot (misma estética plantilla)
+ggplot(p15_pct_ord, aes(y = item, x = pct, fill = respuesta)) +
+  geom_col(width = 0.75, color = "white", linewidth = 0.3) +
+  geom_text(
+    aes(
+      label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+      color = ifelse(
+        respuesta %in% c("Totalmente\nde acuerdo", "Algo de\nacuerdo"),
+        "white", "black"
+      )
+    ),
+    position = position_stack(vjust = 0.5),
+    size = 5
+  ) +
+  scale_color_identity() +
+  scale_fill_manual(
+    values = colores_p15,
+    breaks = niveles_p15,
+    name = "Nivel",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    text = element_text(color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
+  )
+
+```
+
+# Los encuestados votan 
+
+```{r P16, out.width="100%", echo=FALSE, warning=FALSE}
+diferencia <- data %>%
+  filter(!is.na(P16)) %>%
+  mutate(
+    noti = factor(
+      P16,
+      levels = c(1, 2, 3, 98),
+      labels = c(
+        "Sí",
+        "No",
+        "No recuerda",
+        "NR"
+      )
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond)
+  )
+
+ggplot(diferencia, aes(x = noti, y = pct)) +
+  geom_col(fill = "#00a9e0", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(diferencia$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.6),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+
+ggsave("grafica_P16.png",
+       width = 10,
+       height = 6,
+       dpi = 300)
+```
+
+# Los encuestados piensan votar
+
+```{r P16A , out.width="100%", echo=FALSE, warning=FALSE}
+
+diferencia <- data %>%
+  filter(!is.na(P16A)) %>%
+  mutate(
+    noti = factor(
+      P16A,
+      levels = c(1, 2, 3, 98),
+      labels = c(
+        "Sí",
+        "No",
+        "Aún no sabe",
+        "NR"
+      )
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond)
+  )
+
+ggplot(diferencia, aes(x = noti, y = pct)) +
+  geom_col(fill = "#00a9e0", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(diferencia$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.6),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+
+ggsave("grafica_P16A.png",
+       width = 10,
+       height = 6,
+       dpi = 300)
+```
+
+
+
+```{r P16 y P16A, out.width="100%", eval=FALSE, echo=FALSE}
+
+# Los encuestados votan y piensan votar
+
+# 1) % que votaron (P16 == "Sí")
+tabla_votan <- data %>%
+  filter(!is.na(P16)) %>%
+  mutate(
+    resp = factor(
+      P16,
+      levels = c(1, 2, 3, 98),
+      labels = c("Sí", "No", "No recuerda", "NR")
+    )
+  ) %>%
+  group_by(resp) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  filter(resp == "Sí") %>%
+  transmute(
+    categoria = "Votaron",
+    pct = pct
+  )
+
+# 2) % que piensan votar (P16A == "Sí")
+tabla_piensan_votar <- data %>%
+  filter(!is.na(P16A)) %>%
+  mutate(
+    resp = factor(
+      P16A,
+      levels = c(1, 2, 3, 98),
+      labels = c("Sí", "No", "Aún no sabe", "NR")
+    )
+  ) %>%
+  group_by(resp) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  filter(resp == "Sí") %>%
+  transmute(
+    categoria = "Piensan votar",
+    pct = pct
+  )
+
+# 3) Unir y graficar con estilo plantilla
+tablas_piensan_y_votan <- bind_rows(tabla_votan, tabla_piensan_votar) %>%
+  mutate(categoria = factor(categoria, levels = c("Votaron", "Piensan votar")))
+
+ggplot(tablas_piensan_y_votan, aes(x = categoria, y = pct)) +
+  geom_col(fill = "#00a9e0", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(tablas_piensan_y_votan$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+```
+
+# Creen que votar hace la diferencia y puede traer cambios (gráfico izquierdo)
+
+```{r P17, out.width="100%", echo=FALSE, warning=FALSE}
+
+diferencia <- data %>%
+  filter(!is.na(P17)) %>%
+  mutate(
+    noti = factor(
+      P17,
+      levels = c(1, 2, 3, 4, 98),
+      labels = c(
+        "La costumbre",
+        "La esperanza\nde un cambio",
+        "La solicitud\nde alguien más",
+        "Es mi deber\nciudadano",
+        "NR"
+      )
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond)
+  )
+
+ggplot(diferencia, aes(x = noti, y = pct)) +
+  geom_col(fill = "#00a9e0", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(diferencia$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.6),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+
+```
+
+# Creen que votar hace la diferencia y puede traer cambios (gráfico derecho)
+
+```{r P24, out.width="100%", echo=FALSE, warning=FALSE}
+cambios <- data %>%
+  filter(!is.na(P24)) %>%
+  mutate(
+    noti = factor(
+      P24,
+      levels = c(1, 2, 98),
+      labels = c(
+        "Votar no\ntiene importancia",
+        "Votar es importante\nporque las elecciones pueden\nhacer una diferencia",
+        "NR"
+      )
+    )
+  ) %>%
+  group_by(noti) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    pct = n_pond / sum(n_pond)
+  )
+
+ggplot(cambios, aes(x = noti, y = pct)) +
+  geom_col(fill = "#00a9e0", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(cambios$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.6),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+```
+
+# Los elegidos deben consultar a expertos y universidades al diseñar políticas
+
+```{r P28 y P29, out.width="100%", echo=FALSE, warning=FALSE}
+# 1) % "Totalmente de acuerdo" en P29 -> Universidades
+elegir_universidades <- data %>%
+  filter(!is.na(P29)) %>%
+  mutate(
+    resp = factor(
+      P29,
+      levels = c(1, 2, 3, 4, 98),
+      labels = c("Nada de acuerdo", "2", "3", "Totalmente de acuerdo", "NR")
+    )
+  ) %>%
+  group_by(resp) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  filter(resp == "Totalmente de acuerdo") %>%
+  transmute(
+    categoria = "Universidades",
+    pct = pct
+  )
+
+# 2) % "Totalmente de acuerdo" en P28 -> Expertos
+elegir_expertos <- data %>%
+  filter(!is.na(P28)) %>%
+  mutate(
+    resp = factor(
+      P28,
+      levels = c(1, 2, 3, 4, 98),
+      labels = c("Nada de acuerdo", "2", "3", "Totalmente de acuerdo", "NR")
+    )
+  ) %>%
+  group_by(resp) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  filter(resp == "Totalmente de acuerdo") %>%
+  transmute(
+    categoria = "Expertos",
+    pct = pct
+  )
+
+# 3) Unir y graficar (estilo plantilla)
+elegir_universidades_expertos <- bind_rows(elegir_universidades, elegir_expertos) %>%
+  mutate(categoria = factor(categoria, levels = c("Universidades", "Expertos")))
+
+ggplot(elegir_universidades_expertos, aes(x = categoria, y = pct)) +
+  geom_col(fill = "#00a9e0", width = 0.7) +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1)),
+    vjust = -0.4, size = 6, color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, max(elegir_universidades_expertos$pct) * 1.15),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(x = "", y = "", title = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.6),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+```
+
+# Más de 1/4 de los encuestados es de "centro
+
+```{r P37, out.width="100%", echo=FALSE, warning=FALSE}
+# Base limpia (misma lógica: filtrar válidos + dejar peso)
+p37 <- data %>%
+  filter(!is.na(P37), P37 >= 1, P37 <= 10) %>%
+  mutate(
+    P37_num = as.numeric(P37),
+    peso = FACTOR_PONDERACION_2
+  )
+
+ggplot(p37, aes(x = P37_num)) +
+  geom_histogram(
+    aes(weight = peso, y = after_stat(count / sum(count))),
+    bins = 10,
+    fill = "#2c285b",
+    color = "#2c285b",
+    alpha = 1
+  ) +
+  geom_line(
+    aes(weight = peso, y = after_stat(density)),
+    stat = "density",
+    linewidth = 0.8,
+    color = "#ffb83b"
+  ) +
+  scale_x_continuous(
+    breaks = 1:10,
+    labels = c(
+      "Izquierda", "", "", "", "Centro", "", "", "", "", "Derecha"
+    )
+  ) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    axis.text = element_text(size = 20, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.6),
+    axis.line.y = element_blank(),
+    legend.position = "none"
+  )
+
+```
+
+# La democracia depende más de la transparencia que de la afinidad ideológica
+
+```{r P21, out.width="100%", echo=FALSE, warning=FALSE}
+# 1) Items + labels
+items_p21 <- paste0("P21_", 1:4)
+
+labels_p21 <- c(
+  "Afinidad ideológica",
+  "Transparente",
+  "Eficiente",
+  "Respeta límites constitucionales"
+)
+
+# 2) Long + factores (ranking)
+p21_long <- data %>%
+  select(all_of(items_p21), FACTOR_PONDERACION_2) %>%
+  pivot_longer(
+    cols = all_of(items_p21),
+    names_to = "item",
+    values_to = "rank"
+  ) %>%
+  mutate(
+    item = factor(item, levels = items_p21, labels = labels_p21),
+    rank = as.numeric(rank),
+    rank = factor(
+      rank,
+      levels = c(4, 3, 2, 1),  # <- orden de stack: abajo->arriba
+      labels = c("Menos\nimportante", "Importancia\nbaja", "Importancia\nmedia", "Más\nimportante")
+    )
+  ) %>%
+  filter(!is.na(rank))
+
+# 3) % ponderado (100% dentro de cada ítem)
+p21_pct <- p21_long %>%
+  group_by(item, rank) %>%
+  summarise(
+    n_pond = sum(FACTOR_PONDERACION_2, na.rm = TRUE),
+    .groups = "drop_last"
+  ) %>%
+  mutate(pct = n_pond / sum(n_pond)) %>%
+  ungroup()
+
+# 4) Ordenar ítems por % de "Más importante"
+orden_items_p21 <- p21_pct %>%
+  filter(rank == "Más\nimportante") %>%
+  arrange(desc(pct)) %>%
+  pull(item)
+
+orden_items_p21_inv <- rev(orden_items_p21)
+
+p21_pct_ord <- p21_pct %>%
+  mutate(item = factor(item, levels = orden_items_p21_inv))
+
+# 5) Plot (estética plantilla)
+ggplot(p21_pct_ord, aes(y = item, x = pct, fill = rank)) +
+  geom_col(width = 0.75, color = "white", linewidth = 0.3) +
+  geom_text(
+    aes(
+      label = ifelse(pct >= 0.06, scales::percent(pct, accuracy = 1), ""),
+      color = ifelse(rank %in% c("Más\nimportante", "Importancia\nmedia"), "white", "black")
+    ),
+    position = position_stack(vjust = 0.5),
+    size = 5
+  ) +
+  scale_color_identity() +
+  scale_fill_manual(
+    values = rev(cvp_palette(4)),
+    name = "Prioridad",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
+  labs(title = "", x = "", y = "") +
+  theme(
+    text = element_text(color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.text.x = element_text(size = 12, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black", linewidth = 0.3),
+    axis.line.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
+  )
+
+```
+

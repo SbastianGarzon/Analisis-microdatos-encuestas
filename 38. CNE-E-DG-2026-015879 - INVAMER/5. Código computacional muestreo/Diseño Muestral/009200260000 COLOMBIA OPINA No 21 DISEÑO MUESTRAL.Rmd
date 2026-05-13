@@ -1,0 +1,296 @@
+---
+title: "009200260000 COLOMBIA OPINA No 21"
+author: "Laura Camila Agudelo"
+date: '2026-04-10'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Esta sintáxis permite realizar diseños muestrales de orden nacional. Para realizar diseños a nivel de departamento o región se puede utilizar como base y ajustar según los requerimientos del estudio.
+
+```{r}
+#Se especifican las generalidades del estudio
+
+#N es el número de puntos muestrales y encuestas por punto.
+
+#######################################
+# ACTUALIZAR SOLO LOS SIGUENTES DATOS #
+#######################################
+
+# ORDEN: 
+# 1	Caribe
+# 2	Centro - Oriente
+# 3	Eje Cafetero
+# 4	Pacífico
+# 5	Centro - Sur - Amazonía
+# 6	Llano. 
+
+N1 <- 54
+N2 <- 77
+N3 <- 43
+N4 <- 38
+N5 <- 16
+N6 <- 10
+  
+cuotas<-c(N1, N2, N3, N4, N5, N6)
+EncuestasxPunto<-16
+codigo<-"009200260000"
+nombre<-"009200260000 COLOMBIA OPINA No 21"
+usuario<-Sys.info()["user"]
+
+################
+# NO MODIFICAR #
+################
+
+semilla <-as.numeric(substr(codigo, 1, 8))
+set.seed(semilla)
+
+###################
+# GUARDAR DISEÑOS #
+###################
+
+
+ruta_resultados<-paste("ruta")
+
+##########################
+# GUARDAR PROCESAMIENTOS #
+##########################
+
+ruta_procesamiento<-paste("ruta")
+
+ruta_procesamiento1<-paste("ruta")
+
+ruta_procesamiento2<-paste("ruta")
+
+```
+
+
+```{r}
+# Se cargan las librerias.
+librerias<-c("tidyverse","odbc","beepr","openxlsx","summarytools","readxl")
+sapply(librerias,require,character.only=T)
+```
+
+```{r}
+# Importamos el marco muestral de proyecciones 2025. (validar que se trabaje con las proyecciones del año actual)
+
+marco_municipios <- data.frame(read_xlsx("ruta", sheet = "Marco Muestral"))
+```
+
+
+```{r}
+data <- marco_municipios %>%
+  mutate(Zona = factor(Zona, levels = c("Urbano", "Rural"))) %>%
+  arrange(COD_REGION, desc(POBLACION_TOTAL), Zona)
+```
+
+```{r}
+codzona <- c("1","2","3","4","5","6")
+
+
+diseño1 <- data.frame()
+diseño2 <- data.frame()
+
+source(file = "fun_desing.R")
+
+for (zona in codzona) {
+  # Obtener la cuota correspondiente a la subregión
+  cuota <- cuotas[match(zona, codzona)]
+
+  # Filtrar los datos para la subregión actual
+
+  datos_zona <- data[data$COD_REGION == zona, ]
+ 
+  # Aplicar la función seleccionar_puntos y combinar los resultados
+  
+  diseño11 <- seleccionar_puntos(Data = datos_zona, N = cuota, EncuestasxPunto = EncuestasxPunto)
+
+  diseño22 <- seleccionar_puntos(Data = datos_zona, N = cuota, EncuestasxPunto = EncuestasxPunto)
+
+  # Combinar el resultado con el conjunto de datos principal
+  diseño1 <- rbind(diseño1, diseño11)
+  diseño2 <- rbind(diseño2, diseño22)
+}
+```
+
+```{r}
+table(diseño1$Zona)
+table(diseño2$Zona)
+```
+# REVISION (1) DE LA LEY 569 DEL 2025
+
+1. En los estudios de nivel nacional se deben incluir todos los municipios cuyos tamaños poblacionales son iguales o superiores a 800.000 habitantes. 
+
+Por tanto las siguientes ciudades deben estar si o si en cada diseño: 
+
+Barranquilla, Bogotá, Medellin, Cali. 
+
+2. En los estudios de nivel nacional se deben inlcuir todos los municipios con mayor tamaño poblacional en cada region, esto aplica para las regiones que no contienen algun municipio del item 1. 
+
+
+Por tanto las siguientes ciudades deben estar si o si en cada diseño: 
+
+Ibagué, Villavicencio. 
+
+
+Todos los municipios, se incluyeron en el vector forzados. 
+
+```{r}
+forzados <- c("08001", "11001", "05001", "76001", "73001", "50001", "25754", "54001", "13001")
+```
+
+Validación para el diseño 1: 
+Verificar que está en TRUE, si sale FALSE entonces debe indicar cuál codigo de municipio falta. 
+
+
+```{r}
+# Verificar si todos están presentes en el diseño 1. 
+presentes1 <- forzados %in% diseño1$COD_MUNICIPIO
+
+if (all(presentes1)) {
+  TRUE
+} else {
+  cat("FALSE - Faltan los siguientes códigos:\n")
+  print(forzados[!presentes1])
+}
+
+```
+
+Validación para el diseño 2: 
+Verificar que está en TRUE, si sale FALSE entonces debe indicar cuál codigo de municipio falta. 
+
+```{r}
+# Verificar si todos están presentes en el diseño 2. 
+presentes2 <- forzados %in% diseño2$COD_MUNICIPIO
+
+if (all(presentes2)) {
+  TRUE
+} else {
+  cat("FALSE - Faltan los siguientes códigos:\n")
+  print(forzados[!presentes2])
+}
+```
+
+# REVISION (2) DE LA LEY 569 DEL 2025
+
+3. La norma menciona que se deben incluir al menos uno (1) municipio en cada region y en cada tamaño. 
+
+Se crea una lista que combina Region y tamañ: 
+Todas las validaciones deben dar verdadero. 
+Excepto las regiones 5 y 6 que no tienen municipios de tamaño 1. 
+
+DISEÑO 1:
+
+```{r}
+# Lista de resultados
+validaciones <- list()
+
+# Iterar sobre regiones y tamaños
+for (region in 1:6) {
+  for (tamano in 1:4) {
+    
+    # Filtrar la data por región y tamaño
+    subset_data <- data %>%
+      filter(COD_REGION == region, COD_TAMANO == tamano) %>%
+      select(COD_REGION, COD_MUNICIPIO, COD_TAMANO) %>%
+      mutate(COD_MUNICIPIO = as.numeric(COD_MUNICIPIO)) %>%
+      distinct()
+    
+    # Validar si al menos uno está presente en diseño2
+    presentes <- diseño1$COD_MUNICIPIO %in% subset_data$COD_MUNICIPIO
+    
+    # Guardar resultado
+    key <- paste0("R", region, "_T", tamano)
+    
+    if (any(presentes)) {
+      validaciones[[key]] <- TRUE
+    } else {
+      codigos_faltantes <- subset_data$COD_MUNICIPIO[!subset_data$COD_MUNICIPIO %in% diseño1$COD_MUNICIPIO]
+      validaciones[[key]] <- paste("FALSE - Faltan:", paste(codigos_faltantes, collapse = ", "))
+    }
+  }
+}
+
+# Convertir la lista en un data.frame
+validaciones_df <- data.frame(
+  Combinacion = names(validaciones),
+  Resultado = unlist(validaciones),
+  row.names = NULL,
+  stringsAsFactors = FALSE
+)
+
+# Ver el resultado
+print(validaciones_df)
+
+```
+
+DISEÑO 2:
+
+```{r}
+# Lista de resultados
+validaciones <- list()
+
+# Iterar sobre regiones y tamaños
+for (region in 1:6) {
+  for (tamano in 1:4) {
+    
+    # Filtrar la data por región y tamaño
+    subset_data <- data %>%
+      filter(COD_REGION == region, COD_TAMANO == tamano) %>%
+      select(COD_REGION, COD_MUNICIPIO, COD_TAMANO) %>%
+      mutate(COD_MUNICIPIO = as.numeric(COD_MUNICIPIO)) %>%
+      distinct()
+    
+    # Validar si al menos uno está presente en diseño2
+    presentes <- diseño2$COD_MUNICIPIO %in% subset_data$COD_MUNICIPIO
+    
+    # Guardar resultado
+    key <- paste0("R", region, "_T", tamano)
+    
+    if (any(presentes)) {
+      validaciones[[key]] <- TRUE
+    } else {
+      codigos_faltantes <- subset_data$COD_MUNICIPIO[!subset_data$COD_MUNICIPIO %in% diseño2$COD_MUNICIPIO]
+      validaciones[[key]] <- paste("FALSE - Faltan:", paste(codigos_faltantes, collapse = ", "))
+    }
+  }
+}
+
+# Convertir la lista en un data.frame
+validaciones_df <- data.frame(
+  Combinacion = names(validaciones),
+  Resultado = unlist(validaciones),
+  row.names = NULL,
+  stringsAsFactors = FALSE
+)
+
+# Ver el resultado
+print(validaciones_df)
+
+```
+
+```{r}
+# Exportamos los datos:
+
+desing<-createWorkbook()
+addWorksheet(desing,"Diseño 1")
+writeData(desing,sheet = "Diseño 1",x = diseño1)
+addWorksheet(desing,"Diseño 2")
+writeData(desing,sheet = "Diseño 2",x = diseño2)
+addWorksheet(desing,"Marco Muestral")
+writeData(desing,sheet = "Marco Muestral",x = marco_municipios)
+
+saveWorkbook(desing,ruta_resultados,overwrite = TRUE)
+
+```
+
+# Se guarda el procesamiento:
+```{r}
+save(diseño1, file = ruta_procesamiento1)
+save(diseño2, file = ruta_procesamiento2)
+save.image(file = ruta_procesamiento)
+```
+

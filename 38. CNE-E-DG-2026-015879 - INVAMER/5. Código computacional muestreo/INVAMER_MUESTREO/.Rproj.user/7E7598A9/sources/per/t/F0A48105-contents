@@ -1,0 +1,31 @@
+#' Title MUESTREO SISTEMATICO
+#'
+#' @param datos La base de datos. de la clase "data.frame" o "tibble".
+#' @param TamanoMuestra El tamaño de la muestra que desea de clase "numeric" o "integer".
+#'
+#' @return Retornará una lista con 2 elementos, los indices y la muestra correspondiente.
+#' @export
+#'
+#' @examples
+#' # Tomamos una muestra aleatoria sistemática de la base de datos "mtcars"
+#' MuestreoSistematico(datos = mtcars, 10)
+MuestreoSistematico <- function(datos, TamanoMuestra) {
+
+    # tamaño: cantidad de registros.
+    tamano <- nrow(datos)
+    # intervarlo: tamaño de los saltos en el indice de la muestra.
+    intervalo <- round(tamano/TamanoMuestra)
+    # aleatorio: valor aleatorio inicial.
+    aleatorio <- sample(x = 1:intervalo, size = 1)
+
+    # indices: los indices que se tomarán de la base de datos.
+    indices <- cumsum(c(aleatorio, rep(intervalo, TamanoMuestra-1)) )
+    # Aqui se usa el modulo "%%" para que, dé la vuelta a la secuencia de números en el lugar correspondiente:
+    indices[which(indices > tamano)] <- indices[which(indices > tamano)] %% tamano
+
+    muestra <- datos[indices, ]
+
+    Lista <- list("indices" = indices, "muestra" = muestra)
+
+    return(Lista)
+}

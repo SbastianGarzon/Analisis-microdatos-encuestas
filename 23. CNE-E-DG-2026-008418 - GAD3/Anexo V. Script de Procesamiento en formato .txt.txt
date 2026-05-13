@@ -1,0 +1,187 @@
+!pip -q install pyreadstat pandas numpy openpyxl
+
+import pandas as pd
+import numpy as np
+import pyreadstat
+import unicodedata
+from google.colab import files
+
+def ns(s):
+    if not isinstance(s, str):
+        return s
+    return unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode('ascii').upper().strip()
+
+def n_eff(w):
+    w = np.asarray(w, dtype=float)
+    return (w.sum()**2) / (np.sum(w**2))
+
+def _mask_bool(s):
+    return np.asarray(s.fillna(False).astype(bool).values, dtype=bool)
+
+def rake_national(df, w, col, targets, strength=1.0):
+    w = np.asarray(w, dtype=float)
+    W = w.sum()
+    if W <= 0:
+        return w
+    x = df[col]
+    for k, targ in targets.items():
+        m = _mask_bool(x == k)
+        if m.any():
+            cur = w[m].sum() / W
+            if cur > 0 and targ > 0:
+                s = strength.get(k, 1.0) if isinstance(strength, dict) else strength
+                w[m] *= (targ / cur) ** s
+    return w
+
+def rake_by_region_subset(df, w, region_col, cat_col, targets_by_region, keys, strength=1.0):
+    w = np.asarray(w, dtype=float)
+    regions = df[region_col].dropna().unique()
+    for r in regions:
+        mr = _mask_bool(df[region_col] == r)
+        Wr = w[mr].sum()
+        if Wr <= 0:
+            continue
+        t = targets_by_region.get(r, {})
+        for k in keys:
+            if k not in t:
+                continue
+            targ = t[k]
+            m = mr & _mask_bool(df[cat_col] == k)
+            if m.any():
+                cur = w[m].sum() / Wr
+                if cur > 0 and targ > 0:
+                    s = strength.get(k, 1.0) if isinstance(strength, dict) else strength
+                    w[m] *= (targ / cur) ** s
+    return w
+
+def enforce_pr_ratio(df, w, voto_col, petro=1, rodolfo=2, petro_share_in_pr=0.515, strength=0.6):
+    w = np.asarray(w, dtype=float)
+    mp = _mask_bool(df[voto_col] == petro)
+    mr = _mask_bool(df[voto_col] == rodolfo)
+    Wp = w[mp].sum()
+    Wr = w[mr].sum()
+    S = Wp + Wr
+    if S > 0 and Wp > 0 and Wr > 0:
+        w[mp] *= ((S * petro_share_in_pr) / Wp) ** strength
+        w[mr] *= ((S * (1 - petro_share_in_pr)) / Wr) ** strength
+    return w
+
+def cap_and_renorm(w, n, lo=0.5, hi=2.5):
+    w = np.asarray(w, dtype=float)
+    s = w.sum()
+    if s > 0:
+        w = w * (n / s)
+    w = np.clip(w, lo, hi)
+    s = w.sum()
+    if s > 0:
+        w = w * (n / s)
+    return w
+
+def build_voto_targets(df, no_voto_obj=0.26, blanco_obj=0.04, petro_share_in_pr=0.515):
+    valid = df["Q10"].dropna()
+    p5 = float((valid == 5).mean()) if len(valid) else 0.0
+    p6 = float((valid == 6).mean()) if len(valid) else 0.0
+    rest = max(1.0 - (no_voto_obj + blanco_obj + p5 + p6), 1e-6)
+    petro = rest * petro_share_in_pr
+    rodolfo = rest * (1.0 - petro_share_in_pr)
+    targets = {1: petro, 2: rodolfo, 3: blanco_obj, 4: no_voto_obj, 5: p5, 6: p6}
+    s = sum(targets.values())
+    return {k: v / s for k, v in targets.items()}
+
+uf = files.upload()
+fn = list(uf.keys())[0]
+df, mt = pyreadstat.read_sav(fn)
+
+df["Departamento"] = df["zona"].apply(ns)
+
+mp = {
+    'BOGOTA': 'BOGOTA', 'BOGOTA D.C.': 'BOGOTA', 'DISTRITO CAPITAL': 'BOGOTA',
+    'ATLANTICO': 'CARIBE', 'BOLIVAR': 'CARIBE', 'CESAR': 'CARIBE', 'CORDOBA': 'CARIBE',
+    'LA GUAJIRA': 'CARIBE', 'MAGDALENA': 'CARIBE', 'SUCRE': 'CARIBE', 'SAN ANDRES': 'CARIBE',
+    'ARCHIPIELAGO DE SAN ANDRES, PROVIDENCIA Y SANTA CATALINA': 'CARIBE',
+    'ANTIOQUIA': 'CENTRAL', 'CALDAS': 'CENTRAL', 'QUINDIO': 'CENTRAL', 'RISARALDA': 'CENTRAL', 'HUILA': 'CENTRAL', 'TOLIMA': 'CENTRAL',
+    'BOYACA': 'ORIENTAL', 'CUNDINAMARCA': 'ORIENTAL', 'META': 'ORIENTAL', 'NORTE DE SANTANDER': 'ORIENTAL', 'SANTANDER': 'ORIENTAL',
+    'VALLE DEL CAUCA': 'PACIFICA', 'CAUCA': 'PACIFICA', 'NARINO': 'PACIFICA', 'CHOCO': 'PACIFICA',
+    'AMAZONAS': 'AMAZ-ORIN', 'ARAUCA': 'AMAZ-ORIN', 'CAQUETA': 'AMAZ-ORIN', 'CASANARE': 'AMAZ-ORIN',
+    'GUAINIA': 'AMAZ-ORIN', 'GUAVIARE': 'AMAZ-ORIN', 'PUTUMAYO': 'AMAZ-ORIN', 'VAUPES': 'AMAZ-ORIN',
+    'VICHADA': 'AMAZ-ORIN'
+}
+
+df["Macroregion"] = df["Departamento"].map(mp)
+
+df["Gedad"] = pd.cut(df["Q03"], bins=[17, 24, 34, 44, 54, 120], labels=[1, 2, 3, 4, 5]).astype("float").astype("Int64")
+df["Estrato_3g"] = df["Q13"].replace({1:1,2:1,3:2,4:3,5:3,6:3,7:np.nan}).astype("float").astype("Int64")
+
+df["SexoGedad"] = (
+    df["Q02"].astype("Int64").astype("string") + "_" +
+    df["Gedad"].astype("Int64").astype("string")
+)
+
+tv_reg = {
+    'BOGOTA': {1:0.33, 2:0.30, 3:0.04, 4:0.33},
+    'CARIBE': {1:0.33, 2:0.25, 3:0.02, 4:0.40},
+    'CENTRAL': {1:0.20, 2:0.37, 3:0.03, 4:0.40},
+    'ORIENTAL': {1:0.19, 2:0.39, 3:0.02, 4:0.40},
+    'PACIFICA': {1:0.35, 2:0.18, 3:0.02, 4:0.45},
+    'AMAZ-ORIN': {1:0.24, 2:0.28, 3:0.03, 4:0.45}
+}
+
+t_est = {1:0.727, 2:0.192, 3:0.079}
+
+t_sexo_edad = {
+    "1_1": 0.08, "2_1": 0.08,
+    "1_2": 0.11, "2_2": 0.11,
+    "1_3": 0.09, "2_3": 0.10,
+    "1_4": 0.07, "2_4": 0.08,
+    "1_5": 0.12, "2_5": 0.15
+}
+_s = sum(t_sexo_edad.values())
+t_sexo_edad = {k: v / _s for k, v in t_sexo_edad.items()}
+
+t_v_nat = build_voto_targets(df, no_voto_obj=0.26, blanco_obj=0.04, petro_share_in_pr=0.515)
+
+n = len(df)
+w = np.ones(n, dtype=float)
+
+for it in range(160):
+    w = rake_national(df, w, "SexoGedad", t_sexo_edad, strength=1.0)
+    w = rake_national(df, w, "Estrato_3g", t_est, strength=0.75)
+    w = rake_national(df, w, "Q10", t_v_nat, strength={1:0.3, 2:0.3, 3:0.25, 4:0.55, 5:0.1, 6:0.1})
+    w = enforce_pr_ratio(df, w, "Q10", petro_share_in_pr=0.515, strength=0.6)
+    w = cap_and_renorm(w, n)
+
+for it in range(60):
+    w = rake_by_region_subset(df, w, "Macroregion", "Q10", tv_reg, keys=[1,2,3], strength=0.12)
+    w = enforce_pr_ratio(df, w, "Q10", petro_share_in_pr=0.515, strength=0.6)
+    w = cap_and_renorm(w, n)
+
+df["Ponderación"] = np.round(w, 6)
+
+col_labels = dict(getattr(mt, "column_names_to_labels", {}) or {})
+col_labels.update({
+    "Ponderación": "Ponderación (capado 0.5–2.5) - CON macroregión",
+    "Gedad": "Grupo de edad (1=18-24, 2=25-34, 3=35-44, 4=45-54, 5=55+)",
+    "Estrato_3g": "Estrato agrupado (1=Estratos 1-2, 2=Estrato 3, 3=Estratos 4-6)"
+})
+
+vlabels = dict(getattr(mt, "variable_value_labels", {}) or {})
+vlabels["Gedad"] = {1:"18-24", 2:"25-34", 3:"35-44", 4:"45-54", 5:"55+"}
+vlabels["Estrato_3g"] = {1:"Estratos 1-2", 2:"Estrato 3", 3:"Estratos 4-6"}
+
+base_name = "GAD3 505-221 Microdatos RCN Febrero"
+sav_name = base_name + ".sav"
+xlsx_name = base_name + ".xlsx"
+
+pyreadstat.write_sav(df, sav_name, column_labels=col_labels, variable_value_labels=vlabels)
+
+dfx = df.copy()
+for c, lb in vlabels.items():
+    if c in dfx.columns:
+        dfx[c] = dfx[c].map(lb).fillna(dfx[c])
+
+dfx.to_excel(xlsx_name, index=False)
+
+print(f"n-eff Ponderación: {n_eff(df['Ponderación']):.2f}")
+
+files.download(sav_name)
+files.download(xlsx_name)

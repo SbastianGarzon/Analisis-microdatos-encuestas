@@ -1,0 +1,14 @@
+Fld CA00, CA00:2
++ El avance de las organizaciones criminales=01
++ La corrupci¢n=02
++ El sistema de salud=03
++ La educaci¢n=04
++ Las dificultades de conseguir trabajo=05
++ La inequidad, muchos pobres=06
++ La debilidad de la fuerza p£blica para enfrentar el crimen=07
++ El deterioro del medio ambiente=08
++ Ninguno=88;%Nosort
++ NS/NR=99;%Nosort
+N03;COLTXT R+1=----
+N05
+

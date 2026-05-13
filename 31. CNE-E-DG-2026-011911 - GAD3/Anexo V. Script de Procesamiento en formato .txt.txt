@@ -1,0 +1,338 @@
+!pip -q install pyreadstat pandas numpy openpyxl
+
+import numpy as np
+import pandas as pd
+import pyreadstat
+import re
+import math
+from google.colab import files
+
+Z_95 = 1.96
+
+CAP_LO, CAP_HI = 0.75, 1.64
+DO_RECUERDO = True
+RECUERDO_STRENGTH = 0.02
+
+SEXO_COL = "Q02"
+EDAD_COL = "Q03"
+ESTRATO_COL = "Q12"
+RECUERDO_COL = "Q09"
+WEIGHT_COL = "Ponderación"
+
+ITERS_SOCIO = 260
+ITERS_RECUERDO = 60
+ITERS_RECLAVAR_SOCIO = 120
+
+STRENGTH_SEXOEDAD = 1.0
+STRENGTH_ESTRATO = 0.85
+
+def cap_and_renorm(w, target_sum, lo, hi):
+    w = np.asarray(w, float)
+    s = w.sum()
+    if s > 0:
+        w = w * (target_sum / s)
+    w = np.clip(w, lo, hi)
+    s = w.sum()
+    if s > 0:
+        w = w * (target_sum / s)
+    return w
+
+def rake_1d_subset(series, w, targets, eligible_mask, strength=1.0):
+    w = np.asarray(w, float)
+    elig = np.asarray(eligible_mask, bool)
+    if not elig.any():
+        return w
+    W = w[elig].sum()
+    if W <= 0:
+        return w
+    x = series
+    for k, targ in targets.items():
+        mk = elig & (x == k).fillna(False).to_numpy(bool)
+        if not mk.any():
+            continue
+        cur = w[mk].sum() / W
+        if cur <= 0 or targ <= 0:
+            continue
+        w[mk] *= (targ / cur) ** strength
+    return w
+
+def n_eff_kish(w):
+    w = np.asarray(w, float)
+    sw = w.sum()
+    return (sw ** 2) / np.sum(w ** 2) if sw > 0 else float("nan")
+
+def read_targets_xlsx(path):
+    se = pd.read_excel(path, sheet_name="sexo_edad_target_2025_18p").dropna(subset=["sexo_edad_key", "pct_objetivo"])
+    est = pd.read_excel(path, sheet_name="estrato_GEIH_target").dropna(subset=["estrato", "pct_objetivo"])
+    rec = pd.read_excel(path, sheet_name="recuerdo_2022_2v_nacional").dropna(subset=["categoria", "pct_sobre_censo"])
+    return se, est, rec
+
+def build_targets_sexoedad_3g(se_df):
+    se_df = se_df.copy()
+    se_df["sexo"] = se_df["sexo_edad_key"].astype(str).str.split("_").str[0].astype(int)
+    se_df["g5"] = se_df["sexo_edad_key"].astype(str).str.split("_").str[1].astype(int)
+
+    def g3(g5):
+        if g5 in [1, 2]:
+            return 1
+        if g5 in [3, 4]:
+            return 2
+        if g5 == 5:
+            return 3
+        return np.nan
+
+    se_df["g"] = se_df["g5"].apply(g3)
+    grp = se_df.groupby(["sexo", "g"])["pct_objetivo"].sum()
+    t = {f"{sex}_{g}": float(val) for (sex, g), val in grp.items()}
+    s = sum(t.values())
+    return {k: v / s for k, v in t.items()}
+
+def build_targets_estrato3g(est_df):
+    def to_int(x):
+        try:
+            return int(x)
+        except:
+            return None
+
+    d = est_df.copy()
+    d["estrato_int"] = d["estrato"].apply(to_int)
+    d = d[d["estrato_int"].isin([1, 2, 3, 4, 5, 6])].copy()
+
+    def g3(e):
+        if e in [1, 2]:
+            return 1
+        if e == 3:
+            return 2
+        if e in [4, 5, 6]:
+            return 3
+        return np.nan
+
+    d["estrato_3g"] = d["estrato_int"].apply(g3)
+    grp = d.groupby("estrato_3g")["pct_objetivo"].sum().to_dict()
+    s = sum(grp.values())
+    return {int(k): float(v / s) for k, v in grp.items()}
+
+def build_targets_pr(rec_df):
+    sub = rec_df[rec_df["categoria"].isin(["PETRO", "RODOLFO_HERNANDEZ"])].copy()
+    t = {
+        1: float(sub[sub["categoria"] == "PETRO"]["pct_sobre_censo"].iloc[0]),
+        2: float(sub[sub["categoria"] == "RODOLFO_HERNANDEZ"]["pct_sobre_censo"].iloc[0]),
+    }
+    s = sum(t.values())
+    return {k: v / s for k, v in t.items()}
+
+VALUE_LABELS_EXTRA = {
+    "Gedad": {1: "18-34", 2: "35-54", 3: "55+"},
+    "Estrato_3g": {1: "Estratos 1-2", 2: "Estrato 3", 3: "Estratos 4-6"},
+    "SexoEdad_code": {
+        1: "Hombre 18-34",
+        2: "Hombre 35-54",
+        3: "Hombre 55+",
+        4: "Mujer 18-34",
+        5: "Mujer 35-54",
+        6: "Mujer 55+",
+    },
+}
+
+COLUMN_LABELS_EXTRA = {
+    "Gedad": "Grupo de edad (3 grupos): 1=18-34, 2=35-54, 3=55+",
+    "Estrato_3g": "Estrato agrupado (3 grupos): 1=Estratos 1-2, 2=Estrato 3, 3=Estratos 4-6",
+    "SexoEdad_key": "Clave sexo×edad (3 grupos) para calibración",
+    "SexoEdad_code": "Sexo×edad (3 grupos) - variable etiquetada",
+}
+
+def export_labeled_excel(df, meta, out_xlsx, col_labels_extra, vlabels_extra):
+    dfx = df.copy()
+    col_labels = dict(getattr(meta, "column_names_to_labels", {}) or {})
+    vlabels = dict(getattr(meta, "variable_value_labels", {}) or {})
+    col_labels.update(col_labels_extra)
+    for k, mp in vlabels_extra.items():
+        vlabels[k] = mp
+
+    for var, mapping in vlabels.items():
+        if var not in dfx.columns or not isinstance(mapping, dict) or not mapping:
+            continue
+        any_str = any(isinstance(v, str) for v in mapping.values())
+        if any_str:
+            ser = dfx[var]
+            lab = ser.map(mapping)
+            dfx[var] = lab.astype("string").fillna(ser.astype("string"))
+        else:
+            dfx[var] = dfx[var].replace(mapping)
+
+    new_cols = {}
+    for c in dfx.columns:
+        lb = col_labels.get(c, "")
+        new_cols[c] = f"{c} - {lb}" if lb else c
+
+    dfx.rename(columns=new_cols, inplace=True)
+    dfx.to_excel(out_xlsx, index=False)
+
+Q_RANGE_PATTERN = re.compile(r"^Q(0[2-9]|1[0-3])($|[._A-Z].*)", re.IGNORECASE)
+
+def pick_q02_to_q13(df):
+    cols = [str(c) for c in df.columns]
+    picked = [c for c in cols if Q_RANGE_PATTERN.match(c) and not c.upper().startswith("Q01")]
+
+    def sort_key(name):
+        m = re.match(r"^Q(\d{2})", name, re.IGNORECASE)
+        base = int(m.group(1)) if m else 999
+        suf = name[3:] if len(name) > 3 else ""
+        return (base, suf)
+
+    return sorted(picked, key=sort_key)
+
+def compute_quality_table(df, meta, weight_col, question_vars, out_xlsx):
+    col_labels = dict(getattr(meta, "column_names_to_labels", {}) or {})
+    vlabels = dict(getattr(meta, "variable_value_labels", {}) or {})
+    gedad_labels = VALUE_LABELS_EXTRA["Gedad"]
+
+    rows = []
+    for q in question_vars:
+        if q == EDAD_COL and "Gedad" in df.columns:
+            x_all = df["Gedad"]
+            q_text = col_labels.get(q, q) + " (agrupada 3 grupos)"
+            value_labels = gedad_labels
+        else:
+            if q not in df.columns:
+                continue
+            x_all = df[q]
+            q_text = col_labels.get(q, q)
+            value_labels = vlabels.get(q, {}) or {}
+
+        valid = x_all.notna()
+        n_valid = int(valid.sum())
+        if n_valid == 0:
+            continue
+
+        w = df.loc[valid, weight_col].astype(float)
+        x = x_all.loc[valid]
+        W = float(w.sum())
+        if W <= 0:
+            continue
+
+        neff = float(n_eff_kish(w.to_numpy()))
+        deff_pesos = float(n_valid / neff) if neff > 0 else float("nan")
+
+        cats = pd.unique(x)
+        try:
+            cats = sorted(cats)
+        except TypeError:
+            cats = sorted(cats, key=lambda v: str(v))
+
+        for c in cats:
+            y = (x == c).astype(float)
+            p_hat = float((w * y).sum() / W)
+            resid = y - p_hat
+            var_t = float(((w ** 2) * (resid ** 2)).sum() / (W ** 2))
+            if n_valid > 1:
+                var_t *= (n_valid / (n_valid - 1))
+            se = float(math.sqrt(var_t))
+            moe = float(Z_95 * se)
+
+            rows.append({
+                "pregunta_var": q,
+                "pregunta_texto": q_text,
+                "categoria_codigo": c,
+                "categoria_etiqueta": value_labels.get(c, str(c)),
+                "n_valido": n_valid,
+                "n_eff_kish": neff,
+                "DEFF_pesos": deff_pesos,
+                "estimacion": p_hat,
+                "error_estandar": se,
+                "margen_error_95": moe,
+                "metodo": "Taylor (aprox. con-reemplazo) sobre pesos finales; Kish diagnóstico",
+            })
+
+    out = pd.DataFrame(rows)
+    with pd.ExcelWriter(out_xlsx, engine="openpyxl") as writer:
+        pd.DataFrame([
+            {"campo": "CAP", "detalle": f"{CAP_LO}–{CAP_HI}"},
+            {"campo": "Edad", "detalle": "Q03 se reporta como distribución por Gedad (3 grupos)"},
+            {"campo": "Kish", "detalle": "n_eff = (sum w)^2 / sum(w^2); DEFF_pesos = n / n_eff"},
+            {"campo": "MoE95", "detalle": "MoE = 1.96 * SE (95%)"},
+        ]).to_excel(writer, sheet_name="README", index=False)
+
+        out.to_excel(writer, sheet_name="Indicadores", index=False)
+
+up1 = files.upload()
+xlsx = [fn for fn in up1.keys() if fn.lower().endswith(".xlsx")]
+if not xlsx:
+    raise ValueError("No se subió ningún .xlsx.")
+targets = [fn for fn in xlsx if "targets" in fn.lower()]
+targets_path = targets[0] if targets else xlsx[0]
+
+up2 = files.upload()
+sav = [fn for fn in up2.keys() if fn.lower().endswith(".sav")]
+if not sav:
+    raise ValueError("No se subió ningún .sav.")
+sav_path = sav[0]
+
+df, meta = pyreadstat.read_sav(sav_path)
+
+df["Gedad"] = pd.cut(df[EDAD_COL], bins=[17, 34, 54, 200], labels=[1, 2, 3]).astype("Int64")
+df["Estrato_3g"] = df[ESTRATO_COL].replace({1: 1, 2: 1, 3: 2, 4: 3, 5: 3, 6: 3, 7: np.nan}).astype("Int64")
+
+df["SexoEdad_key"] = (
+    df[SEXO_COL].astype("Int64").astype("string")
+    + "_"
+    + df["Gedad"].astype("Int64").astype("string")
+)
+KEY_TO_CODE = {"1_1": 1, "1_2": 2, "1_3": 3, "2_1": 4, "2_2": 5, "2_3": 6}
+df["SexoEdad_code"] = df["SexoEdad_key"].map(KEY_TO_CODE).astype("Int64")
+
+se_df, est_df, rec_df = read_targets_xlsx(targets_path)
+t_se_key = build_targets_sexoedad_3g(se_df)
+t_se = {KEY_TO_CODE[k]: v for k, v in t_se_key.items() if k in KEY_TO_CODE}
+t_est = build_targets_estrato3g(est_df)
+t_pr = build_targets_pr(rec_df)
+
+n = len(df)
+w = np.ones(n, float)
+
+elig_se = df["SexoEdad_code"].notna().to_numpy(bool)
+elig_est = df["Estrato_3g"].notna().to_numpy(bool)
+
+for _ in range(ITERS_SOCIO):
+    w = rake_1d_subset(df["SexoEdad_code"], w, t_se, elig_se, strength=STRENGTH_SEXOEDAD)
+    w = rake_1d_subset(df["Estrato_3g"], w, t_est, elig_est, strength=STRENGTH_ESTRATO)
+    w = cap_and_renorm(w, n, CAP_LO, CAP_HI)
+
+if DO_RECUERDO:
+    elig_rec = df[RECUERDO_COL].isin([1, 2]).to_numpy(bool)
+    for _ in range(ITERS_RECUERDO):
+        w = rake_1d_subset(df[RECUERDO_COL], w, t_pr, elig_rec, strength=RECUERDO_STRENGTH)
+        w = cap_and_renorm(w, n, CAP_LO, CAP_HI)
+
+    for _ in range(ITERS_RECLAVAR_SOCIO):
+        w = rake_1d_subset(df["SexoEdad_code"], w, t_se, elig_se, strength=STRENGTH_SEXOEDAD)
+        w = rake_1d_subset(df["Estrato_3g"], w, t_est, elig_est, strength=STRENGTH_ESTRATO)
+        w = cap_and_renorm(w, n, CAP_LO, CAP_HI)
+
+df[WEIGHT_COL] = np.round(w, 6)
+
+out_sav = "Anexo IV.B.Microdatos estudio (SPSS).sav"
+out_xlsx = "Anexo IV.A.Microdatos estudio (Excel).xlsx"
+out_quality = "Anexo X. Calidad indicadores.xlsx"
+
+col_labels = dict(getattr(meta, "column_names_to_labels", {}) or {})
+vlabels = dict(getattr(meta, "variable_value_labels", {}) or {})
+col_labels.update(COLUMN_LABELS_EXTRA)
+for k, mp in VALUE_LABELS_EXTRA.items():
+    vlabels[k] = mp
+
+pyreadstat.write_sav(
+    df,
+    out_sav,
+    column_labels=col_labels,
+    variable_value_labels=vlabels
+)
+
+export_labeled_excel(df, meta, out_xlsx, COLUMN_LABELS_EXTRA, VALUE_LABELS_EXTRA)
+
+qvars = pick_q02_to_q13(df)
+compute_quality_table(df, meta, WEIGHT_COL, qvars, out_quality)
+
+files.download(out_sav)
+files.download(out_xlsx)
+files.download(out_quality)

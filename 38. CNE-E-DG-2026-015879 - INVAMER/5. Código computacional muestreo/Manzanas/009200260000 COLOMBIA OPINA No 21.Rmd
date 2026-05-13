@@ -1,0 +1,335 @@
+---
+title: "009200260000 COLOMBIA OPINA No 21"
+author: "Laura Camila Agudelo"
+date: '2026-04-13'
+output: html_document
+---
+
+EJECUTIVO: 
+DIRECTOR: ESTEFANIA ARIAS
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Se cargan las librerias necesarias para el estudio
+```{r}
+tiempo1 <- Sys.time()
+library(tidyverse)
+library(writexl)
+library(readxl)
+library(beepr)
+library(readxl)
+library(dplyr)
+library(INVAMER.MUESTREO)
+```
+
+Aqui ingrese las cuotas segun corresponda:
+```{r}
+tiempo1 <- Sys.time()
+# SE REALIZA EN TODO EL PAIS
+# EL ESTUDIO ES SISTEMATICO (SE USAN PROYECCIONES DANE AL AÑO ACTUAL)
+# ESTE MUESTREO SE REALIZA CON CARTOGRAFÍA 2019 Y 2023: 
+
+#######################################
+# ACTUALIZAR SOLO LOS SIGUENTES DATOS #
+#######################################
+nom_estudio<-"009200260000 COLOMBIA OPINA No 21"
+codigo<-"009200260000"
+
+ciudad_codigo1 <- c('05001','05088','05129','05266','05360','05615','05631','08001','08078','08433','08758','11001','13001','15001','15759','17001','19001','20001','23001','25175','25269','25290','25430','25754','41001','44001','47001','50001','52001','54001','54405','54874','63001','63130','66001','66170','68001','68081','68276','68307','68547','70001','73001','76001','76109','76147','76364','76520','76834','85001')
+ciudad_codigo2 <- c('5134','5172','5209','5697','8520','8675','13657','15176','15638','17174','19809','20013','20621','25148','25377','25473','25489','27250','27425','41016','41132','41524','44430','44650','47170','47189','47555','52227','52835','54261','63212','63401','63594','66682','70124','70670','70820','73270','73411','76054','76111','76622','76670','81736')
+
+usuario<-Sys.info()["user"]
+
+semilla <-as.numeric(substr(codigo, 1, 8))
+set.seed(semilla)
+
+#Cuotas
+url_cuotas <- paste("ruta")
+
+#Acumuladas (Solo mediciones hechas hace 6 meses o menos)
+ruta_ultimos_6_meses <- paste("ruta")
+
+
+###################
+# GUARDAR MUESTRA #
+###################
+
+url_muestra<-paste("ruta")
+
+
+url_reemplazos<-paste("ruta")
+
+
+########
+# DATA #
+########
+
+url_data_muestra<-paste("ruta")
+
+url_data_reemplazos<-paste("ruta")
+
+##################
+# PROCESAMIENTOS #
+##################
+
+url_procesamiento<-paste("ruta")
+
+
+```
+
+```{r}
+# Con este código se accede a las basese de datos de Cleaning.
+cred <- read.csv("ruta")
+
+password <- cred[2,1]
+
+con <- DBI::dbConnect(odbc::odbc(),
+                      Driver   = "SQL Server",
+                      Server   = "Server",
+                      Database = "BD_Muestreo",
+                      UID      = usuario,
+                      PWD      = password,
+                      Port     = Puerto)
+```
+#Primer grupo
+```{r}
+# Aqui se carga la base de datos de SQL a R.
+t1 <- Sys.time()
+data <- tbl(con, "Marco_Manzanas") %>%  data.frame()
+t2 <- Sys.time()
+t2-t1
+beep(1)
+```
+
+```{r}
+# Se realiza el filtro por codigo ciudad y estrato correspondiente.
+data2 <- data %>%
+  filter(COD_MUNICIPIO %in% ciudad_codigo1, ESTRATO %in% c(1:6)) %>%
+  arrange(COD_MANZANA)
+data2
+
+# Se realizan tablas para comprobar validaciones:
+data2 %>% group_by(COD_MUNICIPIO, ESTRATO) %>% summarise(conteo= n())
+```
+
+##################################
+
+```{r, warning=FALSE}
+# Cargo el archivo de los últimos 6 meses:
+t1 <- Sys.time()
+acumulados <- readxl::read_excel(ruta_ultimos_6_meses, col_types = c("text","text","text"))
+t2 <- Sys.time()
+t2-t1
+Sys.sleep(5)
+beep(2)
+```
+
+
+# SE ELIMINAN DE LA BDD  ORIGINAL PARA QUE NO SEAN NUEVAMENTE CONTACTADOS.
+```{r}
+#Para realizar este procedimiento se utilizará un antijoin
+t1 <- Sys.time()
+data2 <- data2 %>% anti_join(acumulados, by = 'COD_MANZANA')
+# Realizo un ordenamiento por municipio y estrato.
+data2 <- data2 %>% arrange(MUNICIPIO, ESTRATO)
+t2 <- Sys.time()
+t2-t1
+beep(2)
+Sys.sleep(5)
+```
+
+###################################
+
+#Segundo grupo
+```{r}
+# Aqui se carga la base de datos de SQL a R.
+t1 <- Sys.time()
+dataR <- tbl(con, "Marco_Manzanas") %>%  data.frame()
+t2 <- Sys.time()
+t2-t1
+beep(1)
+```
+
+```{r}
+# Se realiza el filtro por codigo ciudad y estrato correspondiente.
+data3 <- dataR %>%
+  filter(COD_MUNICIPIO %in% ciudad_codigo2, ESTRATO %in% c(1:6), COD_ZONA==1) %>%
+  arrange(COD_MANZANA)
+data3
+
+# Se realizan tablas para comprobar validaciones:
+data3 %>% group_by(COD_MUNICIPIO, ESTRATO) %>% summarise(conteo= n())
+```
+
+##################################
+
+# SE ELIMINAN DE LA BDD  ORIGINAL PARA QUE NO SEAN NUEVAMENTE CONTACTADOS.
+```{r}
+#Para realizar este procedimiento se utilizará un antijoin
+t1 <- Sys.time()
+data3 <- data3 %>% anti_join(acumulados, by = 'COD_MANZANA')
+# Realizo un ordenamiento por municipio y estrato.
+data3 <- data3 %>% arrange(MUNICIPIO, ESTRATO)
+t2 <- Sys.time()
+t2-t1
+beep(2)
+Sys.sleep(5)
+```
+
+###################################
+
+#Cuotas
+
+```{r}
+#LEEMOS LAS CUOTAS
+Cuotas1 <- read_excel(url_cuotas, sheet = "Cuotas1")
+Cuotas_reemplazos1 <- read_excel(url_cuotas, sheet = "Reemplazos1")
+Cuotas2 <- read_excel(url_cuotas, sheet = "Cuotas2")
+Cuotas_reemplazos2 <- read_excel(url_cuotas, sheet = "Reemplazos2")
+```
+
+
+
+En esta etapa se realiza el muestreo con la función MuestreoEstratificado del paquete INVAMER.MUESTREO
+
+```{r}
+#PRIMER GRUPO#
+
+data2$ESTRATO<-as.numeric(data2$ESTRATO)
+data2 <- data2[order(data2$COD_MUNICIPIO,data2$ESTRATO), ]
+
+muestra1<-MuestreoEstratificado(datos = data2,
+                                InfoMuestra =Cuotas1,SubMuestreo = "sistematico")
+
+data_muestra1<-muestra1$muestra
+
+# Verificamos las cuotas
+table(data_muestra1$COD_MUNICIPIO, data_muestra1$ESTRATO)
+```
+
+```{r}
+#SEGUNDO GRUPO#
+
+data3$ESTRATO<-as.numeric(data3$ESTRATO)
+data3 <- data3[order(data3$COD_MUNICIPIO,data3$ESTRATO), ]
+
+muestra2<-MuestreoEstratificado(datos = data3,InfoMuestra =Cuotas2,SubMuestreo = "sistematico")
+
+data_muestra2<-muestra2$muestra
+
+# Verificamos las cuotas
+table(data_muestra2$COD_MUNICIPIO, data_muestra2$ESTRATO)
+```
+
+```{r}
+# Cargamos la función de estética y la aplicamos a la data:
+source(file = "fun_estetica.R")
+  
+data_muestra1 <- data_estetica(Data = data_muestra1, MANZ_ORI = 1, estudio = nom_estudio)
+data_muestra1
+data_muestra2$DIRECCION<-""
+data_muestra2 <- data_estetica(Data = data_muestra2, MANZ_ORI = 1, estudio = nom_estudio)
+data_muestra2
+```
+
+
+```{r}
+data_muestra<-rbind(data_muestra1,data_muestra2)
+```
+
+```{r}
+# modficamos los nulos:
+nulos <- which(data_muestra$DIRECCION_1 == "NULL")
+data_muestra$DIRECCION_1[nulos] <- ""
+nulos <- which(data_muestra$COMUNA_LOCALIDAD == "NULL")
+data_muestra$COMUNA_LOCALIDAD[nulos] <- ""
+nulos <- which(data_muestra$BARRIO == "NULL")
+data_muestra$BARRIO[nulos] <- ""
+```
+
+```{r}
+# Se carga la funcion para editar ultimos detalles:
+source(file = "ultimos_detalles.R")
+data_muestra <- ultimos_detalles(data_muestra)
+data_muestra 
+```
+
+
+Reemplazos PRIMER GRUPO
+
+```{r}
+# Elimino la muestra anterior de data3  y almaceno en data4
+t1 <- Sys.time()
+data22 <- data2 %>% anti_join(data_muestra1, by = c('COD_MANZANA'))
+t2 <- Sys.time()
+t2-t1
+```
+
+Realizamos los reemplazos:
+```{r}
+reemplazos1<-MuestreoEstratificado(datos = data22,InfoMuestra =Cuotas_reemplazos1,SubMuestreo = "simple")
+
+data_reemplazos1<-reemplazos1$muestra
+
+
+data_reemplazos1 <- data_estetica(Data = data_reemplazos1, MANZ_ORI = 2, reemplazo = TRUE, estudio = nom_estudio)
+
+data_reemplazos1
+
+table(data_reemplazos1$COD_MUNICIPIO, data_reemplazos1$ESTRATO)
+```
+
+Reemplazos SEGUNDO GRUPO
+
+```{r}
+# Elimino la muestra anterior de data3  y almaceno en data33
+t1 <- Sys.time()
+data33 <- data3 %>% anti_join(data_muestra1, by = c('COD_MANZANA'))
+t2 <- Sys.time()
+t2-t1
+```
+
+Realizamos los reemplazos:
+```{r}
+reemplazos2<-MuestreoEstratificado(datos = data33,InfoMuestra =Cuotas_reemplazos2,SubMuestreo = "simple")
+
+data_reemplazos2<-reemplazos2$muestra
+
+data_reemplazos2$DIRECCION<-""
+data_reemplazos2 <- data_estetica(Data = data_reemplazos2, MANZ_ORI = 2, reemplazo = TRUE, estudio = nom_estudio)
+
+data_reemplazos2
+
+table(data_reemplazos2$COD_MUNICIPIO, data_reemplazos2$ESTRATO)
+```
+```{r}
+data_reemplazos<-rbind(data_reemplazos1,data_reemplazos2)
+```
+
+```{r}
+# Exporto los archivos:
+write_xlsx(x = data_muestra, 
+           path = url_muestra)
+
+write_xlsx(x = data_reemplazos, 
+           path = url_reemplazos)
+
+# Se guarda el procesamiento:
+save(data_muestra, file = url_data_muestra)
+save(data_muestra, file = url_data_reemplazos)
+
+data<-NULL
+# Se guarda el procesamiento:
+save.image(file=url_procesamiento)
+
+tiempo2 <- Sys.time()
+tiempo2-tiempo1
+beep(8)
+```
+
+
+
+
+

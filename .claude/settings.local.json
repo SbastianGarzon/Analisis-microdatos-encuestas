@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\pablo\\\\Downloads\\\\declaraciones_senado\\\\OneDrive_4_12-5-2026\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(Sort-Object)",
+      "Bash(python3 *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\pablo\\\\Downloads\\\\declaraciones_senado\\\\OneDrive_4_12-5-2026\" -Recurse -Include \"*.xlsx\",\"*.csv\",\"*.sav\",\"*.dbf\",\"*.xls\")",
+      "Bash(Select-Object FullName, Length)",
+      "Bash(Sort-Object FullName)",
+      "Skill(update-config)",
+      "Bash(python harmonize_encuestas.py)",
+      "Bash(Test-Path *)"
+    ]
+  }
+}

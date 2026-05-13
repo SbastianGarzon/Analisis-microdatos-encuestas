@@ -1,0 +1,1279 @@
+{
+  "meta": {
+    "source_file": "C:\\Users\\pablo\\Downloads\\declaraciones_senado\\OneDrive_4_12-5-2026\\encuestas_concatenadas.xlsx",
+    "excel_file": "C:\\Users\\pablo\\Downloads\\declaraciones_senado\\OneDrive_4_12-5-2026\\analisis_desde_cero.xlsx",
+    "json_file": "C:\\Users\\pablo\\Downloads\\declaraciones_senado\\OneDrive_4_12-5-2026\\analisis_desde_cero.json",
+    "pesos": [
+      {
+        "encuestadora": "Invamer",
+        "fecha": "2026-04-25",
+        "peso": 1766
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "fecha": "2026-04-10",
+        "peso": 707
+      },
+      {
+        "encuestadora": "GAD3",
+        "fecha": "2026-03-16",
+        "peso": 89
+      },
+      {
+        "encuestadora": "CNC",
+        "fecha": "2026-03-16",
+        "peso": 220
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "fecha": "2026-03-12",
+        "peso": 175
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "fecha": "2026-02-28",
+        "peso": 29
+      },
+      {
+        "encuestadora": "Invamer",
+        "fecha": "2026-02-25",
+        "peso": 22
+      },
+      {
+        "encuestadora": "CNC",
+        "fecha": "2026-02-20",
+        "peso": 26
+      },
+      {
+        "encuestadora": "GAD3",
+        "fecha": "2026-02-16",
+        "peso": 15
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "fecha": "2026-02-05",
+        "peso": 29
+      },
+      {
+        "encuestadora": "GAD3",
+        "fecha": "2026-01-13",
+        "peso": 1
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "fecha": "2026-01-09",
+        "peso": 175
+      }
+    ]
+  },
+  "tables": {
+    "sesgo_edad_grupo": [
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "edad_grupo",
+        "categoria": "55+",
+        "peso_encuestadora": 41.64,
+        "peso_promedio_otras": 26.7,
+        "sesgo_rel_pp": 14.94
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "edad_grupo",
+        "categoria": "18-34",
+        "peso_encuestadora": 38.56,
+        "peso_promedio_otras": 37.72,
+        "sesgo_rel_pp": 0.84
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "edad_grupo",
+        "categoria": "35-54",
+        "peso_encuestadora": 19.8,
+        "peso_promedio_otras": 35.58,
+        "sesgo_rel_pp": -15.78
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "edad_grupo",
+        "categoria": "35-54",
+        "peso_encuestadora": 35.1,
+        "peso_promedio_otras": 29.77,
+        "sesgo_rel_pp": 5.33
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "edad_grupo",
+        "categoria": "18-34",
+        "peso_encuestadora": 36.61,
+        "peso_promedio_otras": 38.12,
+        "sesgo_rel_pp": -1.51
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "edad_grupo",
+        "categoria": "55+",
+        "peso_encuestadora": 28.29,
+        "peso_promedio_otras": 32.11,
+        "sesgo_rel_pp": -3.82
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "edad_grupo",
+        "categoria": "35-54",
+        "peso_encuestadora": 35.45,
+        "peso_promedio_otras": 30.0,
+        "sesgo_rel_pp": 5.45
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "edad_grupo",
+        "categoria": "18-34",
+        "peso_encuestadora": 35.42,
+        "peso_promedio_otras": 38.09,
+        "sesgo_rel_pp": -2.67
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "edad_grupo",
+        "categoria": "55+",
+        "peso_encuestadora": 29.13,
+        "peso_promedio_otras": 31.91,
+        "sesgo_rel_pp": -2.78
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "edad_grupo",
+        "categoria": "35-54",
+        "peso_encuestadora": 35.66,
+        "peso_promedio_otras": 23.48,
+        "sesgo_rel_pp": 12.18
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "edad_grupo",
+        "categoria": "18-34",
+        "peso_encuestadora": 38.0,
+        "peso_promedio_otras": 38.01,
+        "sesgo_rel_pp": -0.01
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "edad_grupo",
+        "categoria": "55+",
+        "peso_encuestadora": 26.34,
+        "peso_promedio_otras": 38.51,
+        "sesgo_rel_pp": -12.17
+      }
+    ],
+    "sesgo_sexo": [
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "sexo",
+        "categoria": "Mujer",
+        "peso_encuestadora": 54.16,
+        "peso_promedio_otras": 51.43,
+        "sesgo_rel_pp": 2.73
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "sexo",
+        "categoria": "Hombre",
+        "peso_encuestadora": 45.84,
+        "peso_promedio_otras": 48.57,
+        "sesgo_rel_pp": -2.73
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "sexo",
+        "categoria": "Hombre",
+        "peso_encuestadora": 48.01,
+        "peso_promedio_otras": 47.6,
+        "sesgo_rel_pp": 0.41
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "sexo",
+        "categoria": "Mujer",
+        "peso_encuestadora": 51.99,
+        "peso_promedio_otras": 52.4,
+        "sesgo_rel_pp": -0.41
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "sexo",
+        "categoria": "Hombre",
+        "peso_encuestadora": 48.1,
+        "peso_promedio_otras": 47.62,
+        "sesgo_rel_pp": 0.48
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "sexo",
+        "categoria": "Mujer",
+        "peso_encuestadora": 51.9,
+        "peso_promedio_otras": 52.38,
+        "sesgo_rel_pp": -0.48
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "sexo",
+        "categoria": "Hombre",
+        "peso_encuestadora": 48.67,
+        "peso_promedio_otras": 46.37,
+        "sesgo_rel_pp": 2.3
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "sexo",
+        "categoria": "Mujer",
+        "peso_encuestadora": 51.33,
+        "peso_promedio_otras": 53.63,
+        "sesgo_rel_pp": -2.3
+      }
+    ],
+    "sesgo_region": [
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "region",
+        "categoria": "Central",
+        "peso_encuestadora": 32.13,
+        "peso_promedio_otras": 18.9,
+        "sesgo_rel_pp": 13.23
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "region",
+        "categoria": "Bogota",
+        "peso_encuestadora": 21.19,
+        "peso_promedio_otras": 10.91,
+        "sesgo_rel_pp": 10.28
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "region",
+        "categoria": "Caribe",
+        "peso_encuestadora": 23.03,
+        "peso_promedio_otras": 15.24,
+        "sesgo_rel_pp": 7.79
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "region",
+        "categoria": "Pacifico",
+        "peso_encuestadora": 18.35,
+        "peso_promedio_otras": 11.19,
+        "sesgo_rel_pp": 7.16
+      },
+      {
+        "encuestadora": "Atlas Intel",
+        "variable": "region",
+        "categoria": "Amazonia - Orinoquia",
+        "peso_encuestadora": 5.3,
+        "peso_promedio_otras": 2.66,
+        "sesgo_rel_pp": 2.64
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "region",
+        "categoria": "Caribe",
+        "peso_encuestadora": 21.74,
+        "peso_promedio_otras": 14.11,
+        "sesgo_rel_pp": 7.63
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "region",
+        "categoria": "Eje Cafetero",
+        "peso_encuestadora": 18.64,
+        "peso_promedio_otras": 11.93,
+        "sesgo_rel_pp": 6.71
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "region",
+        "categoria": "Pacifico",
+        "peso_encuestadora": 15.96,
+        "peso_promedio_otras": 10.7,
+        "sesgo_rel_pp": 5.26
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "region",
+        "categoria": "Centro - Sur - Amazonia",
+        "peso_encuestadora": 6.4,
+        "peso_promedio_otras": 3.71,
+        "sesgo_rel_pp": 2.69
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "region",
+        "categoria": "Bogota",
+        "peso_encuestadora": 15.82,
+        "peso_promedio_otras": 13.25,
+        "sesgo_rel_pp": 2.57
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "region",
+        "categoria": "Llano",
+        "peso_encuestadora": 4.12,
+        "peso_promedio_otras": 1.84,
+        "sesgo_rel_pp": 2.28
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "region",
+        "categoria": "Centro - Oriente",
+        "peso_encuestadora": 17.32,
+        "peso_promedio_otras": 21.03,
+        "sesgo_rel_pp": -3.71
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "region",
+        "categoria": "Caribe",
+        "peso_encuestadora": 25.88,
+        "peso_promedio_otras": 14.3,
+        "sesgo_rel_pp": 11.58
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "region",
+        "categoria": "Central",
+        "peso_encuestadora": 27.42,
+        "peso_promedio_otras": 20.49,
+        "sesgo_rel_pp": 6.93
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "region",
+        "categoria": "Bogota",
+        "peso_encuestadora": 16.0,
+        "peso_promedio_otras": 12.89,
+        "sesgo_rel_pp": 3.11
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "region",
+        "categoria": "Pacifico",
+        "peso_encuestadora": 11.95,
+        "peso_promedio_otras": 10.84,
+        "sesgo_rel_pp": 1.11
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "region",
+        "categoria": "Amazonia - Orinoquia",
+        "peso_encuestadora": 3.86,
+        "peso_promedio_otras": 3.38,
+        "sesgo_rel_pp": 0.48
+      },
+      {
+        "encuestadora": "GAD3",
+        "variable": "region",
+        "categoria": "Centro - Oriente",
+        "peso_encuestadora": 14.88,
+        "peso_promedio_otras": 20.22,
+        "sesgo_rel_pp": -5.34
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "region",
+        "categoria": "Centro - Oriente",
+        "peso_encuestadora": 33.69,
+        "peso_promedio_otras": 11.89,
+        "sesgo_rel_pp": 21.8
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "region",
+        "categoria": "Caribe",
+        "peso_encuestadora": 22.13,
+        "peso_promedio_otras": 15.79,
+        "sesgo_rel_pp": 6.34
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "region",
+        "categoria": "Eje Cafetero",
+        "peso_encuestadora": 19.02,
+        "peso_promedio_otras": 12.89,
+        "sesgo_rel_pp": 6.13
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "region",
+        "categoria": "Pacifico",
+        "peso_encuestadora": 16.3,
+        "peso_promedio_otras": 12.35,
+        "sesgo_rel_pp": 3.95
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "region",
+        "categoria": "Centro - Sur - Amazonia",
+        "peso_encuestadora": 5.91,
+        "peso_promedio_otras": 4.43,
+        "sesgo_rel_pp": 1.48
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "region",
+        "categoria": "Llano",
+        "peso_encuestadora": 2.94,
+        "peso_promedio_otras": 2.85,
+        "sesgo_rel_pp": 0.09
+      }
+    ],
+    "sesgo_estrato": [
+      {
+        "encuestadora": "CNC",
+        "variable": "estrato",
+        "categoria": "3",
+        "peso_encuestadora": 12.07,
+        "peso_promedio_otras": 4.09,
+        "sesgo_rel_pp": 7.98
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "estrato",
+        "categoria": "2",
+        "peso_encuestadora": 14.48,
+        "peso_promedio_otras": 9.41,
+        "sesgo_rel_pp": 5.07
+      },
+      {
+        "encuestadora": "CNC",
+        "variable": "estrato",
+        "categoria": "1",
+        "peso_encuestadora": 16.88,
+        "peso_promedio_otras": 36.49,
+        "sesgo_rel_pp": -19.61
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "estrato",
+        "categoria": "1",
+        "peso_encuestadora": 72.99,
+        "peso_promedio_otras": 11.25,
+        "sesgo_rel_pp": 61.74
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "estrato",
+        "categoria": "2",
+        "peso_encuestadora": 18.83,
+        "peso_promedio_otras": 9.65,
+        "sesgo_rel_pp": 9.18
+      },
+      {
+        "encuestadora": "Invamer",
+        "variable": "estrato",
+        "categoria": "3",
+        "peso_encuestadora": 8.19,
+        "peso_promedio_otras": 8.05,
+        "sesgo_rel_pp": 0.14
+      }
+    ],
+    "aprobacion_vs_voto": [
+      {
+        "aprobacion_petro": "Aprueba",
+        "Abelardo de la Espriella": 1.95,
+        "Carlos Caicedo": 0.51,
+        "Clara López": 0.14,
+        "Claudia López": 2.41,
+        "Iván Cepeda": 69.26,
+        "Luis Gilberto Murillo": 0.41,
+        "Mauricio Lizcano": 0.29,
+        "Miguel Uribe Londoño": 0.15,
+        "NS/NR": 5.21,
+        "Ninguno": 9.15,
+        "No sé": 0.76,
+        "No votaría": 0.08,
+        "Otro candidato": 0.01,
+        "Paloma Valencia": 3.06,
+        "Roy Barreras": 0.24,
+        "Santiago Botero": 0.84,
+        "Sergio Fajardo": 1.72,
+        "Sondra Macollins": 0.29,
+        "Voto en blanco": 3.52
+      },
+      {
+        "aprobacion_petro": "Desaprueba",
+        "Abelardo de la Espriella": 34.53,
+        "Carlos Caicedo": 0.43,
+        "Clara López": 0.78,
+        "Claudia López": 2.89,
+        "Iván Cepeda": 3.75,
+        "Luis Gilberto Murillo": 0.22,
+        "Mauricio Lizcano": 0.31,
+        "Miguel Uribe Londoño": 0.45,
+        "NS/NR": 6.82,
+        "Ninguno": 12.56,
+        "No sé": 0.98,
+        "No votaría": 1.15,
+        "Otro candidato": 0.02,
+        "Paloma Valencia": 25.78,
+        "Roy Barreras": 0.11,
+        "Santiago Botero": 1.09,
+        "Sergio Fajardo": 3.89,
+        "Sondra Macollins": 0.35,
+        "Voto en blanco": 3.9
+      },
+      {
+        "aprobacion_petro": "NS/NR",
+        "Abelardo de la Espriella": 4.18,
+        "Carlos Caicedo": 0.06,
+        "Clara López": 2.12,
+        "Claudia López": 3.79,
+        "Iván Cepeda": 6.72,
+        "Luis Gilberto Murillo": 0.0,
+        "Mauricio Lizcano": 0.63,
+        "Miguel Uribe Londoño": 0.67,
+        "NS/NR": 24.91,
+        "Ninguno": 32.57,
+        "No sé": 0.0,
+        "No votaría": 0.0,
+        "Otro candidato": 0.0,
+        "Paloma Valencia": 7.2,
+        "Roy Barreras": 0.74,
+        "Santiago Botero": 1.11,
+        "Sergio Fajardo": 1.0,
+        "Sondra Macollins": 0.24,
+        "Voto en blanco": 14.07
+      },
+      {
+        "aprobacion_petro": "Regular",
+        "Abelardo de la Espriella": 11.29,
+        "Carlos Caicedo": 0.0,
+        "Clara López": 0.17,
+        "Claudia López": 1.78,
+        "Iván Cepeda": 17.72,
+        "Luis Gilberto Murillo": 0.74,
+        "Mauricio Lizcano": 0.29,
+        "Miguel Uribe Londoño": 1.98,
+        "NS/NR": 0.0,
+        "Ninguno": 0.0,
+        "No sé": 10.85,
+        "No votaría": 2.76,
+        "Otro candidato": 1.54,
+        "Paloma Valencia": 16.08,
+        "Roy Barreras": 1.06,
+        "Santiago Botero": 2.56,
+        "Sergio Fajardo": 15.3,
+        "Sondra Macollins": 0.37,
+        "Voto en blanco": 15.52
+      }
+    ],
+    "voto_vs_aprobacion": [
+      {
+        "primera_vuelta": "Abelardo de la Espriella",
+        "Aprueba": 5.4,
+        "Desaprueba": 85.65,
+        "NS/NR": 1.33,
+        "Regular": 7.62
+      },
+      {
+        "primera_vuelta": "Carlos Caicedo",
+        "Aprueba": 55.73,
+        "Desaprueba": 43.85,
+        "NS/NR": 0.42,
+        "Regular": 0.0
+      },
+      {
+        "primera_vuelta": "Clara López",
+        "Aprueba": 13.21,
+        "Desaprueba": 20.11,
+        "NS/NR": 24.56,
+        "Regular": 42.11
+      },
+      {
+        "primera_vuelta": "Claudia López",
+        "Aprueba": 29.58,
+        "Desaprueba": 45.64,
+        "NS/NR": 4.38,
+        "Regular": 20.4
+      },
+      {
+        "primera_vuelta": "Iván Cepeda",
+        "Aprueba": 84.59,
+        "Desaprueba": 5.55,
+        "NS/NR": 0.94,
+        "Regular": 8.92
+      },
+      {
+        "primera_vuelta": "Luis Gilberto Murillo",
+        "Aprueba": 48.92,
+        "Desaprueba": 31.5,
+        "NS/NR": 0.0,
+        "Regular": 19.58
+      },
+      {
+        "primera_vuelta": "Mauricio Lizcano",
+        "Aprueba": 28.68,
+        "Desaprueba": 25.37,
+        "NS/NR": 5.05,
+        "Regular": 40.89
+      },
+      {
+        "primera_vuelta": "Miguel Uribe Londoño",
+        "Aprueba": 7.48,
+        "Desaprueba": 65.65,
+        "NS/NR": 3.39,
+        "Regular": 23.48
+      },
+      {
+        "primera_vuelta": "NS/NR",
+        "Aprueba": 36.23,
+        "Desaprueba": 42.0,
+        "NS/NR": 21.77,
+        "Regular": 0.0
+      },
+      {
+        "primera_vuelta": "Ninguno",
+        "Aprueba": 36.85,
+        "Desaprueba": 51.66,
+        "NS/NR": 11.49,
+        "Regular": 0.0
+      },
+      {
+        "primera_vuelta": "No sé",
+        "Aprueba": 7.47,
+        "Desaprueba": 7.94,
+        "NS/NR": 0.0,
+        "Regular": 84.59
+      },
+      {
+        "primera_vuelta": "No votaría",
+        "Aprueba": 2.17,
+        "Desaprueba": 41.18,
+        "NS/NR": 0.0,
+        "Regular": 56.65
+      },
+      {
+        "primera_vuelta": "Otro candidato",
+        "Aprueba": 1.04,
+        "Desaprueba": 3.82,
+        "NS/NR": 0.0,
+        "Regular": 95.14
+      },
+      {
+        "primera_vuelta": "Paloma Valencia",
+        "Aprueba": 8.62,
+        "Desaprueba": 73.44,
+        "NS/NR": 2.08,
+        "Regular": 15.86
+      },
+      {
+        "primera_vuelta": "Roy Barreras",
+        "Aprueba": 30.1,
+        "Desaprueba": 22.87,
+        "NS/NR": 15.07,
+        "Regular": 31.96
+      },
+      {
+        "primera_vuelta": "Santiago Botero",
+        "Aprueba": 20.04,
+        "Desaprueba": 29.78,
+        "NS/NR": 2.87,
+        "Regular": 47.32
+      },
+      {
+        "primera_vuelta": "Sergio Fajardo",
+        "Aprueba": 17.64,
+        "Desaprueba": 45.45,
+        "NS/NR": 1.46,
+        "Regular": 35.45
+      },
+      {
+        "primera_vuelta": "Sondra Macollins",
+        "Aprueba": 19.41,
+        "Desaprueba": 27.96,
+        "NS/NR": 1.56,
+        "Regular": 51.07
+      },
+      {
+        "primera_vuelta": "Voto en blanco",
+        "Aprueba": 19.53,
+        "Desaprueba": 24.16,
+        "NS/NR": 8.2,
+        "Regular": 48.11
+      }
+    ],
+    "cepeda_aprobacion": [
+      {
+        "primera_vuelta": "Iván Cepeda",
+        "Aprueba": 84.59,
+        "Desaprueba": 5.55,
+        "NS/NR": 0.94,
+        "Regular": 8.92
+      }
+    ],
+    "primera_vuelta_total": [
+      {
+        "primera_vuelta": "Iván Cepeda",
+        "pct_total": 30.27
+      },
+      {
+        "primera_vuelta": "Abelardo de la Espriella",
+        "pct_total": 17.93
+      },
+      {
+        "primera_vuelta": "Paloma Valencia",
+        "pct_total": 14.66
+      },
+      {
+        "primera_vuelta": "Ninguno",
+        "pct_total": 11.57
+      },
+      {
+        "primera_vuelta": "NS/NR",
+        "pct_total": 6.87
+      },
+      {
+        "primera_vuelta": "Voto en blanco",
+        "pct_total": 4.64
+      },
+      {
+        "primera_vuelta": "Sergio Fajardo",
+        "pct_total": 3.42
+      },
+      {
+        "primera_vuelta": "Claudia López",
+        "pct_total": 2.65
+      },
+      {
+        "primera_vuelta": "No sé",
+        "pct_total": 2.47
+      },
+      {
+        "primera_vuelta": "No votaría",
+        "pct_total": 2.35
+      },
+      {
+        "primera_vuelta": "Santiago Botero",
+        "pct_total": 0.96
+      },
+      {
+        "primera_vuelta": "Carlos Caicedo",
+        "pct_total": 0.4
+      },
+      {
+        "primera_vuelta": "Miguel Uribe Londoño",
+        "pct_total": 0.3
+      },
+      {
+        "primera_vuelta": "Luis Gilberto Murillo",
+        "pct_total": 0.29
+      },
+      {
+        "primera_vuelta": "Mauricio Lizcano",
+        "pct_total": 0.27
+      },
+      {
+        "primera_vuelta": "Sondra Macollins",
+        "pct_total": 0.26
+      },
+      {
+        "primera_vuelta": "Otro candidato",
+        "pct_total": 0.25
+      },
+      {
+        "primera_vuelta": "Roy Barreras",
+        "pct_total": 0.23
+      },
+      {
+        "primera_vuelta": "Clara López",
+        "pct_total": 0.2
+      }
+    ],
+    "voto_por_region": [
+      {
+        "region": "Amazonia - Orinoquia",
+        "Abelardo de la Espriella": 14.35,
+        "Carlos Caicedo": 0.0,
+        "Clara López": 0.0,
+        "Claudia López": 3.52,
+        "Iván Cepeda": 27.53,
+        "Luis Gilberto Murillo": 0.0,
+        "Mauricio Lizcano": 0.0,
+        "Miguel Uribe Londoño": 1.3,
+        "NS/NR": 10.13,
+        "Ninguno": 0.0,
+        "No sé": 10.71,
+        "No votaría": 3.89,
+        "Otro candidato": 2.39,
+        "Paloma Valencia": 18.72,
+        "Roy Barreras": 0.81,
+        "Santiago Botero": 2.11,
+        "Sergio Fajardo": 3.69,
+        "Sondra Macollins": 0.0,
+        "Voto en blanco": 0.86
+      },
+      {
+        "region": "Bogota",
+        "Abelardo de la Espriella": 22.32,
+        "Carlos Caicedo": 0.58,
+        "Clara López": 0.4,
+        "Claudia López": 3.99,
+        "Iván Cepeda": 33.32,
+        "Luis Gilberto Murillo": 0.61,
+        "Mauricio Lizcano": 0.0,
+        "Miguel Uribe Londoño": 1.15,
+        "NS/NR": 3.02,
+        "Ninguno": 1.34,
+        "No sé": 0.82,
+        "No votaría": 1.57,
+        "Otro candidato": 0.08,
+        "Paloma Valencia": 19.56,
+        "Roy Barreras": 0.42,
+        "Santiago Botero": 0.33,
+        "Sergio Fajardo": 6.62,
+        "Sondra Macollins": 0.02,
+        "Voto en blanco": 3.85
+      },
+      {
+        "region": "Caribe",
+        "Abelardo de la Espriella": 17.04,
+        "Carlos Caicedo": 0.93,
+        "Clara López": 0.1,
+        "Claudia López": 2.29,
+        "Iván Cepeda": 38.03,
+        "Luis Gilberto Murillo": 0.21,
+        "Mauricio Lizcano": 0.14,
+        "Miguel Uribe Londoño": 0.4,
+        "NS/NR": 4.99,
+        "Ninguno": 12.62,
+        "No sé": 4.48,
+        "No votaría": 1.56,
+        "Otro candidato": 0.91,
+        "Paloma Valencia": 9.23,
+        "Roy Barreras": 0.29,
+        "Santiago Botero": 0.79,
+        "Sergio Fajardo": 1.65,
+        "Sondra Macollins": 0.31,
+        "Voto en blanco": 4.01
+      },
+      {
+        "region": "Central",
+        "Abelardo de la Espriella": 30.31,
+        "Carlos Caicedo": 0.0,
+        "Clara López": 0.0,
+        "Claudia López": 0.62,
+        "Iván Cepeda": 24.86,
+        "Luis Gilberto Murillo": 0.16,
+        "Mauricio Lizcano": 0.24,
+        "Miguel Uribe Londoño": 0.19,
+        "NS/NR": 12.61,
+        "Ninguno": 0.0,
+        "No sé": 1.58,
+        "No votaría": 0.74,
+        "Otro candidato": 0.07,
+        "Paloma Valencia": 19.21,
+        "Roy Barreras": 0.05,
+        "Santiago Botero": 0.33,
+        "Sergio Fajardo": 5.8,
+        "Sondra Macollins": 0.04,
+        "Voto en blanco": 3.2
+      },
+      {
+        "region": "Centro - Oriente",
+        "Abelardo de la Espriella": 16.57,
+        "Carlos Caicedo": 0.6,
+        "Clara López": 0.74,
+        "Claudia López": 4.27,
+        "Iván Cepeda": 27.01,
+        "Luis Gilberto Murillo": 0.27,
+        "Mauricio Lizcano": 0.08,
+        "Miguel Uribe Londoño": 0.12,
+        "NS/NR": 10.2,
+        "Ninguno": 11.15,
+        "No sé": 0.0,
+        "No votaría": 0.0,
+        "Otro candidato": 2.01,
+        "Paloma Valencia": 15.7,
+        "Roy Barreras": 0.11,
+        "Santiago Botero": 0.63,
+        "Sergio Fajardo": 2.43,
+        "Sondra Macollins": 0.36,
+        "Voto en blanco": 7.75
+      },
+      {
+        "region": "Centro - Sur - Amazonia",
+        "Abelardo de la Espriella": 20.7,
+        "Carlos Caicedo": 0.15,
+        "Clara López": 0.0,
+        "Claudia López": 2.09,
+        "Iván Cepeda": 30.34,
+        "Luis Gilberto Murillo": 0.26,
+        "Mauricio Lizcano": 0.5,
+        "Miguel Uribe Londoño": 1.35,
+        "NS/NR": 9.51,
+        "Ninguno": 9.15,
+        "No sé": 0.0,
+        "No votaría": 0.0,
+        "Otro candidato": 0.0,
+        "Paloma Valencia": 17.8,
+        "Roy Barreras": 0.48,
+        "Santiago Botero": 1.03,
+        "Sergio Fajardo": 1.05,
+        "Sondra Macollins": 0.49,
+        "Voto en blanco": 5.1
+      },
+      {
+        "region": "Eje Cafetero",
+        "Abelardo de la Espriella": 16.78,
+        "Carlos Caicedo": 1.1,
+        "Clara López": 0.0,
+        "Claudia López": 3.94,
+        "Iván Cepeda": 20.53,
+        "Luis Gilberto Murillo": 0.39,
+        "Mauricio Lizcano": 1.27,
+        "Miguel Uribe Londoño": 0.62,
+        "NS/NR": 7.34,
+        "Ninguno": 12.83,
+        "No sé": 0.0,
+        "No votaría": 0.0,
+        "Otro candidato": 0.0,
+        "Paloma Valencia": 21.04,
+        "Roy Barreras": 1.01,
+        "Santiago Botero": 2.66,
+        "Sergio Fajardo": 4.88,
+        "Sondra Macollins": 0.74,
+        "Voto en blanco": 4.86
+      },
+      {
+        "region": "Llano",
+        "Abelardo de la Espriella": 14.59,
+        "Carlos Caicedo": 0.29,
+        "Clara López": 0.0,
+        "Claudia López": 3.8,
+        "Iván Cepeda": 29.35,
+        "Luis Gilberto Murillo": 0.35,
+        "Mauricio Lizcano": 0.38,
+        "Miguel Uribe Londoño": 0.6,
+        "NS/NR": 5.8,
+        "Ninguno": 18.74,
+        "No sé": 0.0,
+        "No votaría": 0.0,
+        "Otro candidato": 0.0,
+        "Paloma Valencia": 17.11,
+        "Roy Barreras": 0.29,
+        "Santiago Botero": 1.29,
+        "Sergio Fajardo": 2.16,
+        "Sondra Macollins": 0.86,
+        "Voto en blanco": 4.39
+      },
+      {
+        "region": "Pacifico",
+        "Abelardo de la Espriella": 13.27,
+        "Carlos Caicedo": 0.18,
+        "Clara López": 2.03,
+        "Claudia López": 1.69,
+        "Iván Cepeda": 36.99,
+        "Luis Gilberto Murillo": 0.49,
+        "Mauricio Lizcano": 0.1,
+        "Miguel Uribe Londoño": 0.34,
+        "NS/NR": 11.35,
+        "Ninguno": 11.21,
+        "No sé": 0.77,
+        "No votaría": 0.03,
+        "Otro candidato": 0.0,
+        "Paloma Valencia": 11.87,
+        "Roy Barreras": 0.42,
+        "Santiago Botero": 1.2,
+        "Sergio Fajardo": 4.04,
+        "Sondra Macollins": 0.25,
+        "Voto en blanco": 3.77
+      }
+    ],
+    "voto_por_edad": [
+      {
+        "edad_grupo": "18-34",
+        "Abelardo de la Espriella": 12.15,
+        "Carlos Caicedo": 0.59,
+        "Clara López": 0.92,
+        "Claudia López": 2.76,
+        "Iván Cepeda": 33.61,
+        "Luis Gilberto Murillo": 0.36,
+        "Mauricio Lizcano": 0.34,
+        "Miguel Uribe Londoño": 0.31,
+        "NS/NR": 6.27,
+        "Ninguno": 11.04,
+        "No sé": 3.76,
+        "No votaría": 3.31,
+        "Otro candidato": 1.77,
+        "Paloma Valencia": 11.68,
+        "Roy Barreras": 0.25,
+        "Santiago Botero": 1.6,
+        "Sergio Fajardo": 3.57,
+        "Sondra Macollins": 0.36,
+        "Voto en blanco": 5.37
+      },
+      {
+        "edad_grupo": "35-54",
+        "Abelardo de la Espriella": 20.42,
+        "Carlos Caicedo": 0.24,
+        "Clara López": 0.59,
+        "Claudia López": 2.73,
+        "Iván Cepeda": 27.93,
+        "Luis Gilberto Murillo": 0.38,
+        "Mauricio Lizcano": 0.33,
+        "Miguel Uribe Londoño": 0.35,
+        "NS/NR": 6.88,
+        "Ninguno": 12.01,
+        "No sé": 1.87,
+        "No votaría": 1.99,
+        "Otro candidato": 0.05,
+        "Paloma Valencia": 13.81,
+        "Roy Barreras": 0.07,
+        "Santiago Botero": 0.79,
+        "Sergio Fajardo": 3.12,
+        "Sondra Macollins": 0.27,
+        "Voto en blanco": 6.15
+      },
+      {
+        "edad_grupo": "55+",
+        "Abelardo de la Espriella": 21.77,
+        "Carlos Caicedo": 0.4,
+        "Clara López": 0.21,
+        "Claudia López": 2.37,
+        "Iván Cepeda": 27.54,
+        "Luis Gilberto Murillo": 0.1,
+        "Mauricio Lizcano": 0.19,
+        "Miguel Uribe Londoño": 0.41,
+        "NS/NR": 7.45,
+        "Ninguno": 11.25,
+        "No sé": 1.42,
+        "No votaría": 1.31,
+        "Otro candidato": 0.56,
+        "Paloma Valencia": 18.43,
+        "Roy Barreras": 0.3,
+        "Santiago Botero": 0.2,
+        "Sergio Fajardo": 3.51,
+        "Sondra Macollins": 0.11,
+        "Voto en blanco": 2.46
+      }
+    ],
+    "voto_por_genero": [
+      {
+        "sexo": "Hombre",
+        "Abelardo de la Espriella": 18.31,
+        "Carlos Caicedo": 0.33,
+        "Clara López": 0.18,
+        "Claudia López": 1.28,
+        "Iván Cepeda": 35.12,
+        "Luis Gilberto Murillo": 0.37,
+        "Mauricio Lizcano": 0.34,
+        "Miguel Uribe Londoño": 0.26,
+        "NS/NR": 5.2,
+        "Ninguno": 9.27,
+        "No sé": 2.0,
+        "No votaría": 2.4,
+        "Otro candidato": 0.03,
+        "Paloma Valencia": 15.51,
+        "Roy Barreras": 0.22,
+        "Santiago Botero": 1.61,
+        "Sergio Fajardo": 3.74,
+        "Sondra Macollins": 0.24,
+        "Voto en blanco": 3.6
+      },
+      {
+        "sexo": "Mujer",
+        "Abelardo de la Espriella": 17.42,
+        "Carlos Caicedo": 0.47,
+        "Clara López": 0.32,
+        "Claudia López": 3.84,
+        "Iván Cepeda": 26.09,
+        "Luis Gilberto Murillo": 0.22,
+        "Mauricio Lizcano": 0.26,
+        "Miguel Uribe Londoño": 0.33,
+        "NS/NR": 8.32,
+        "Ninguno": 13.61,
+        "No sé": 2.91,
+        "No votaría": 2.32,
+        "Otro candidato": 0.42,
+        "Paloma Valencia": 13.9,
+        "Roy Barreras": 0.25,
+        "Santiago Botero": 0.4,
+        "Sergio Fajardo": 3.12,
+        "Sondra Macollins": 0.3,
+        "Voto en blanco": 5.51
+      }
+    ],
+    "genero_por_candidato_top4": [
+      {
+        "primera_vuelta": "Abelardo de la Espriella",
+        "Hombre": 48.17,
+        "Mujer": 51.83
+      },
+      {
+        "primera_vuelta": "Sergio Fajardo",
+        "Hombre": 51.4,
+        "Mujer": 48.6
+      },
+      {
+        "primera_vuelta": "Paloma Valencia",
+        "Hombre": 48.58,
+        "Mujer": 51.42
+      },
+      {
+        "primera_vuelta": "Iván Cepeda",
+        "Hombre": 53.4,
+        "Mujer": 46.6
+      },
+      {
+        "primera_vuelta": "Claudia López",
+        "Hombre": 21.22,
+        "Mujer": 78.78
+      }
+    ],
+    "indecisos_edad_grupo": [
+      {
+        "edad_grupo": "18-34",
+        "pct_final": 41.53
+      },
+      {
+        "edad_grupo": "35-54",
+        "pct_final": 36.26
+      },
+      {
+        "edad_grupo": "55+",
+        "pct_final": 22.2
+      }
+    ],
+    "indecisos_sexo": [
+      {
+        "sexo": "Mujer",
+        "pct_final": 62.27
+      },
+      {
+        "sexo": "Hombre",
+        "pct_final": 37.73
+      }
+    ],
+    "indecisos_region": [
+      {
+        "region": "Centro - Oriente",
+        "pct_final": 23.58
+      },
+      {
+        "region": "Caribe",
+        "pct_final": 19.52
+      },
+      {
+        "region": "Central",
+        "pct_final": 14.18
+      },
+      {
+        "region": "Eje Cafetero",
+        "pct_final": 12.64
+      },
+      {
+        "region": "Pacifico",
+        "pct_final": 9.8
+      },
+      {
+        "region": "Bogota",
+        "pct_final": 7.9
+      },
+      {
+        "region": "Amazonia - Orinoquia",
+        "pct_final": 6.45
+      },
+      {
+        "region": "Centro - Sur - Amazonia",
+        "pct_final": 3.41
+      },
+      {
+        "region": "Llano",
+        "pct_final": 2.52
+      }
+    ],
+    "indecisos_estrato": [
+      {
+        "estrato": "1",
+        "pct_final": 24.77
+      },
+      {
+        "estrato": 2,
+        "pct_final": 12.36
+      },
+      {
+        "estrato": "Estrato 2",
+        "pct_final": 11.06
+      },
+      {
+        "estrato": "Estrato 1",
+        "pct_final": 11.02
+      },
+      {
+        "estrato": 1,
+        "pct_final": 10.9
+      },
+      {
+        "estrato": 3,
+        "pct_final": 7.0
+      },
+      {
+        "estrato": "Estrato 3",
+        "pct_final": 6.57
+      },
+      {
+        "estrato": "2",
+        "pct_final": 5.59
+      },
+      {
+        "estrato": "4",
+        "pct_final": 2.53
+      },
+      {
+        "estrato": "Estrato 4",
+        "pct_final": 1.95
+      },
+      {
+        "estrato": "3",
+        "pct_final": 1.65
+      },
+      {
+        "estrato": "NS/NC",
+        "pct_final": 1.22
+      },
+      {
+        "estrato": 5,
+        "pct_final": 1.08
+      },
+      {
+        "estrato": 4,
+        "pct_final": 0.71
+      },
+      {
+        "estrato": "5",
+        "pct_final": 0.7
+      },
+      {
+        "estrato": "6",
+        "pct_final": 0.35
+      },
+      {
+        "estrato": "Estrato 5",
+        "pct_final": 0.31
+      },
+      {
+        "estrato": "Estrato 6",
+        "pct_final": 0.22
+      },
+      {
+        "estrato": 6,
+        "pct_final": 0.03
+      }
+    ],
+    "indecisos_total": [
+      {
+        "grupo": "Indecisos",
+        "pct_total": 36.73
+      }
+    ],
+    "verificacion_100": []
+  }
+}

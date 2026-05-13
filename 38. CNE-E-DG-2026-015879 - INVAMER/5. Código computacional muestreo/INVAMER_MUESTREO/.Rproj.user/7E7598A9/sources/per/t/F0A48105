@@ -1,0 +1,26 @@
+{
+    "id": "F0A48105",
+    "path": "//10.0.0.2/Empresarial/Sistema de Calidad/4.Gerencia Investigacion de Mercados/5.Dirección de Analítica/1.Analisis Estadistico/1.Registros/2.Comunes/ACPM/2022/7. Librerias/INVAMER.MUESTREO/R/MuestreoSistematico.R",
+    "project_path": "R/MuestreoSistematico.R",
+    "type": "r_source",
+    "hash": "3082876954",
+    "contents": "",
+    "dirty": false,
+    "created": 1666099233414.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "11,55",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1665779210,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1665779210,
+    "read_only": false,
+    "read_only_alternatives": []
+}

@@ -1,0 +1,215 @@
+L Totalp
+N10 Casos       ;OP=1
+N10 Porcentajes 
+g
+p    x     x
+
+L Total
+N10 Porcentajes 
+g================
+g                       
+g    TOTAL      
+g               
+g================
+g
+p         x
+
+L REVI
+N11;wm=0
+N01 TOTAL (CASOS);OP=1;WM=0
+N01 TOTAL %;WM=0
+
+N11
+N01 TOTAL (CASOS);OP=1
+N01 TOTAL %           
+g=======================================================
+g        T O T A L E S                wm=1
+g============================ ==========================
+gCASOS SIN PON |      %              #          %
+g============== ============= ============= ============
+p          x           x             x          x
+
+L DEMOGRAF
+N10 
+N03 Sexo 
+FLD C29, C29:1
++ Masculino=1
++ Femenino=2
+N03;NOSORT
+N11 = BASE EXPANDIDA 
+fld C31, C31:1
++ BAJO          =1,2
++ MEDIO         =3
++ Estrato ALTO	=4-6
+N11
+N03 ¨En qu‚ grupo de edad se encuentra usted?;NOSORT 
+N03;NOSORT 
+FLD C33, C33:1
++ 18-24=1
++ 25-34=2
++ 35-44=3
++ 45-54=4
++ 55 o m s=5
+N11
+FLD C20, C20:1
++ Bogot =1
++ Caribe=2
++ Centro Oriente=3
++ Centro Sur - Amazon¡a=4
++ Eje cafetero=5
++ Llano=6
++ Pac¡fico=7
+N11
+Fld C23, C23:1
++ Urbana=1
++ Rural=2
+g
+p      X     X   x     X  x  x    X  x  x  x  x    X  x  x  x  x  x  x   X   x   
+
+L Preg1
+N10
+Fld C35, C35:2
++ Iv n Cepeda Castro - A¡da Quilcu‚=01
++ Abelardo de la Espriella - Jos‚ Manuel Restrepo=02
++ Paloma Valencia - Juan Daniel Oviedo=03
++ Sergio Fajardo - Edna Bonilla=04
++ Claudia L¢pez - Leonardo Huerta=05
++ Roy Barreras - Martha Luc¡a Zamora=06
++ Miguel Uribe Londo¤o - Luisa Fernanda Villegas=07
++ Mauricio Lizcano - Luis Carlos Reyes=08
++ Clara L¢pez Obreg¢n - Mar¡a Consuelo del R¡o Mantilla=09
++ Luis Gilberto Murillo - Luz Mar¡a Zapata=10
++ Carlos Caicedo - Omar Nelson Alarc¢n=11
++ Santiago Botero - Carlos Fernando Cuevas=12
++ Sondra McCollins - Leonardo Karam Helo=13
++ Gustavo Matamoros - Robinson Alonso Giraldo=14
++ Voto en Blanco=66
++ Ninguno=88	
++ NS/NR=99
+g
+p      X     X   x   x   x   x   x   x   x   x   x   x   x   x   x   x   x   X
+
+L Preg15
+N10
+Col 54
++ Positiva=1
++ Negativa=2
++ NS/NR=9
+g
+p      X       X      x      x
+
+L Preg18
+N10
+Col 58
++ S¡=1
++ No=2
++ NS/NR=9
+g
+p      X       X      x      x
+
+
+
+C***************************************
+L Filtro
+N10
+Col 34
++ Definitivamente s¡ votar¡a=1
++ Probablemente s¡ votar¡a=2
+g
+p      X     X   x
+
+L Preg16
+N10
+Col 55
++ Aprueba=1
++ Desaprueba=2
++ NS/NR=9
+g
+p      X       X      x      x
+
+L Partido
+N10
+Fld C72, C72:2
++ Movimiento Pol¡tico Colombia Humana/Pacto Hist¢rico=09
++ Partido Centro Democr tico=14
++ Partido Liberal Colombiano=24
++ Partido Alianza Verde=12
++ Partido Conservador Colombiano=19
++ Partido Cambio Radical=13
++ Movimiento Salvaci¢n Nacional=03
++ Partido Nuevo Liberalismo=26
++ Partido de La Uni¢n Por La Gente - Partido de La U=20
++ Partido Pol¡tico Mira=32
++ Otros partidos=01-02,04-08,10,11,15-18,21-23,25,27-31,33-36,77
++ Ninguno=88
++ NS/NR=99
+g
+p      X       X      x      x      x      x      x      x      x      x      x      x      x      x
+
+
+L CIUDAD
+N10 
+N01 Barranquilla;C=C(17,21).eq.08001
+N01 Bogot  D.C  ;C=C(17,21).eq.11001
+N01 Bucaramanga ;C=C(17,21).eq.68001
+N01 Cali        ;C=C(17,21).eq.76001
+N01 Medell¡n    ;C=C(17,21).eq.05001
+N01 Otras ciudades ;C=C(17,21).ne.08001.and.C(17,21).ne.11001.and.C(17,21).ne.68001.and.C(17,21).ne.76001.and.C(17,21).ne.05001
+N01 Ciudades Principales/Grandes;C=C(43,44).ge.01.and.C(43,44).le.11
+N01 Medianos;C=C(43,44).eq.12
+N01 Peque¤os;C=C(43,44).eq.13
+g
+p      X     X    x    x    x   x    x    X    x    x     
+
+L LOCALIDA
+N00;C=C(45,46).GE.1
+N10 
+Fld C45, C45:2
++ Usaqu‚n=01
++ Chapinero=02
++ Santa Fe=03
++ San Crist¢bal=04
++ Usme=05
++ Tunjuelito=06
++ Bosa=07
++ Kennedy=08
++ Fontib¢n=09
++ Engativ =10
++ Suba=11
++ Barrios Unidos=12
++ Teusaquillo=13
++ Los M rtires=14
++ Antonio Nari¤o=15
++ Puente Aranda=16
++ La Candelaria=17
++ Rafael Uribe Uribe=18
++ Ciudad Bolivar=19
+g
+p      X     X    x    x    x   x    x    x    x   x    x    x    x   x    x    x    x   x    x    x     
+
+
+L cne
+N10 
+g==================
+g                         
+g    TOTAL      
+g                 
+g==================
+p          x                    
+
+L cneX
+N10 
+N03 Sexo 
+FLD C29, C29:1
++ Masculino	=1
++ Femenino 	=2
+g==========================================
+g                          GENERO        
+g    TOTAL        =========================
+g                 Masculino   Femenino
+g================ =========== =============
+p       x              x           x          
+
+
+
+
