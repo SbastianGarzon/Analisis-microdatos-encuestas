@@ -17,7 +17,7 @@ import pyreadstat
 
 warnings.filterwarnings("ignore")
 
-BASE = Path(r"C:\Users\pablo\Downloads\declaraciones_senado\OneDrive_4_12-5-2026")
+BASE = Path(__file__).parent
 OUT  = BASE / "encuestas_concatenadas.xlsx"
 
 # ─── CANDIDATE NAME HARMONIZATION ────────────────────────────────────────────
@@ -565,7 +565,7 @@ pieces = [
                / "Base de Dados Atlas Semana 041026_1.xlsx",      "2026-04-10"),
     # GAD3 (3 surveys)
     read_gad3_05(),
-    read_gad3_23(),
+    #read_gad3_23(),
     read_gad3_31(),
     # Invamer (2 surveys)
     read_invamer(BASE / "19. CNE-E-DG-2026-008198 - INVAMER"
@@ -575,7 +575,7 @@ pieces = [
                  / "3. Data (Regsitros primarios).xlsx",
                  "2026-04-25", "Colombia Opina 21"),
     # CNC (2 surveys)
-    read_cnc_25(),
+    #read_cnc_25(),
     read_cnc_34(),
 ]
 
@@ -632,6 +632,9 @@ def _norm(val, mapping):
 
 combined["edad_grupo"] = combined["edad_grupo"].apply(lambda x: _norm(x, EDAD_NORM))
 combined["region"]     = combined["region"].apply(lambda x: _norm(x, REGION_NORM))
+combined["estrato"] = combined["estrato"].apply(
+    lambda x: re.sub(r"[^0-9]", "", str(x)) if pd.notna(x) else None
+)
 # ──────────────────────────────────────────────────────────────────────────
 
 combined.to_excel(OUT, index=False)

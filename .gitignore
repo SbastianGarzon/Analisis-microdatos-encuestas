@@ -1,7 +1,16 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
-*.ipynb_checkpoints/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Editor
+.claude/
 
 # Archivos temporales
 *.crdownload
@@ -16,6 +25,3 @@ __pycache__/
 *.prj
 *.cpg
 
-# Salidas locales opcionales
-.DS_Store
-Thumbs.db
