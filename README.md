@@ -4,7 +4,7 @@ Reproducción del análisis de intención de voto a partir de los microdatos de 
 
 ## Autoría
 
-El análisis original — incluyendo los scripts `harmonize_encuestas.py`, `analisis_desde_cero.py` y `procesador.ipynb` — es trabajo de Pablo. Este repositorio añade únicamente el entorno de ejecución reproducible (`Dockerfile`, `requirements.txt`, `run_docker.sh`, `export_docker_output.sh`) para facilitar la reproducción del análisis.
+El análisis original — incluyendo los scripts `harmonize_encuestas.py`, `analisis_desde_cero.py` y `procesador.ipynb` — es trabajo de [Pablo Manrique](https://github.com/PabloManriqueo) . Este repositorio añade únicamente el entorno de ejecución reproducible (`Dockerfile`, `requirements.txt`, `run_docker.sh`, `export_docker_output.sh`) para facilitar la reproducción del análisis.
 
 ## Pipeline
 
